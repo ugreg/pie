@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.tsbuildinfo
+*.js
+*.js.map
+.DS_Store
+coverage/
+*.log

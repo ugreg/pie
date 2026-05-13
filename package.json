@@ -1,0 +1,16 @@
+{
+  "name": "pi-mono",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo with multiple pi extensions",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "prepare": "husky",
+    "scan": "npm audit --workspaces && trufflehog git file://$(pwd) --json --only-verified && semgrep --config=p/community --quiet ./src/"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}
