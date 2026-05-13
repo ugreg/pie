@@ -2,15 +2,17 @@
   "name": "pi-mono",
   "version": "1.0.0",
   "private": true,
-  "description": "Monorepo with multiple pi extensions",
   "workspaces": [
-    "packages/*"
+    "permissions",
+    "pkmn"
   ],
   "scripts": {
     "prepare": "husky",
-    "scan": "npm audit --workspaces && trufflehog git file://$(pwd) --json --only-verified && semgrep --config=p/community --quiet ./src/"
+    "lint": "npx oxlint permissions/ pkmn/",
+    "build": "pnpm --filter './permissions' build && pnpm --filter './pkmn' build"
   },
   "devDependencies": {
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "oxlint": "^1.64.0"
   }
 }
