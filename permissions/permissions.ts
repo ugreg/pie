@@ -1,5 +1,4 @@
 import { readFileSync, writeFileSync, existsSync } from "fs";
-import * as yaml from "yaml";
 import { join } from "path";
 import { homedir } from "os";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
@@ -16,7 +15,7 @@ interface SendOptions {
   deliverAs: string;
 }
 
-const CONFIG_PATH = join(homedir(), ".pi", "permissions.yaml");
+const CONFIG_PATH = join(homedir(), ".pi", "permissions.json");
 
 function loadConfig(): PermissionConfig {
   const configPath = CONFIG_PATH;
@@ -28,7 +27,7 @@ function loadConfig(): PermissionConfig {
   
   try {
     const raw = readFileSync(configPath, "utf-8");
-    return yaml.parse(raw) as PermissionConfig;
+    return JSON.parse(raw);
   } catch {
     return {
       restricted: [],
@@ -37,7 +36,8 @@ function loadConfig(): PermissionConfig {
 }
 
 function saveConfig(config: PermissionConfig): void {
-  writeFileSync(CONFIG_PATH, yaml.stringify(config));
+  const numSpaces = 2;
+  writeFileSync(CONFIG_PATH, JSON.stringify(config, null, numSpaces));
 }
 
 function matchCommand(cmd: string, pattern: string): boolean {
@@ -161,6 +161,23 @@ async function showPermissionDialog(
     return "reject";
   }
   return "allow_once";
+}
+
+function sendPermissionNotification(
+  toolName: string,
+  decision: "allow_once" | "allow_always" | "reject",
+  ctx: ExtensionContext,
+): void {
+  const statusMessage = decision === "reject"
+    ? "Rejected"
+    : decision === "allow_once"
+      ? "Approved (once)"
+      : "Approved (always)";
+  
+  ctx.ui.notify(
+    `${statusMessage} Permission request (${toolName}): ${toolName} tool`,
+    decision === "reject" ? "error" : "success",
+  );
 }
 
 async function addCwdToConfig(
@@ -293,6 +310,7 @@ export default function (pi: ExtensionAPI) {
         resource,
         ctx,
       );
+      sendPermissionNotification(toolName, choice, ctx);
       if (choice === "allow_once") return;
       if (choice === "allow_always") {
         await addCwdToConfig(toolName, ctx, pi);
@@ -305,6 +323,8 @@ export default function (pi: ExtensionAPI) {
       resource,
       ctx,
     );
+
+    sendPermissionNotification(toolName, choice, ctx);
 
     if (choice === "allow_once") {
       return;

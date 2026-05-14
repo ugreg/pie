@@ -10,8 +10,6 @@ import {
 } from "./permissions";
 
 import { CommandPolicy, BashPolicy, ToolPolicy, ExtensionToolsPolicy, PermissionConfig } from "./permissions.types";
-import * as yaml from "yaml";
-const TEST_CONFIG = yaml.parse(readFileSync("permissions.example.yaml", "utf-8")) as PermissionConfig;
 
 import { join } from "path";
 import { homedir } from "os";
@@ -178,3 +176,145 @@ describe("Permission System", () => {
     });
   });
 });
+
+const TEST_CONFIG: PermissionConfig = {
+  "bash": {
+    "git *": {
+      "default": "ask",
+      "allowed": []
+    },
+    "npm *": {
+      "default": "ask",
+      "allowed": []
+    },
+    "rm *": {
+      "default": "deny",
+      "allowed": []
+    },
+    "dd *": {
+      "default": "deny",
+      "allowed": []
+    },
+    "kill *": {
+      "default": "deny",
+      "allowed": []
+    },
+    "killall *": {
+      "default": "deny",
+      "allowed": []
+    },
+    "nc *": {
+      "default": "deny",
+      "allowed": []
+    },
+    "mv *": {
+      "default": "deny",
+      "allowed": []
+    },
+    "allowed": []
+  },
+  "tools": {
+    "edit": {
+      "default": "ask",
+      "allowed": []
+    },
+    "find": {
+      "default": "allow",
+      "allowed": []
+    },
+    "grep": {
+      "default": "allow",
+      "allowed": []
+    },
+    "ls": {
+      "default": "allow",
+      "allowed": []
+    },
+    "read": {
+      "default": "ask",
+      "allowed": [
+        "/Users/_/pie"
+      ]
+    },
+    "write": {
+      "default": "deny",
+      "allowed": []
+    }
+  },
+  "exec": {
+    "default": "deny",
+    "allowed": []
+  },
+  "mcp": {
+    "default": "ask",
+    "allowed": []
+  },
+  "skills": {
+    "default": "ask",
+    "allowed": []
+  },
+  "special": {
+    "default": "ask",
+    "allowed": []
+  },
+  "extensionTools": {
+    "code_search": {
+      "default": "allow",
+      "allowed": []
+    },
+    "fetch_content": {
+      "default": "allow",
+      "allowed": []
+    },
+    "get_search_content": {
+      "default": "allow",
+      "allowed": []
+    },
+    "web_search": {
+      "default": "ask",
+      "allowed": []
+    }
+  },
+  "restricted": [
+    "./dev/",
+    "./usr/sbin/",
+    "./private/etc/cups/",
+    "./Library/Caches/com.apple.aned",
+    "./Library/Bluetooth",
+    "./Library/Trial",
+    "~/.Trash",
+    "./Library/Application Support/com.apple.TCC",
+    "./Library/Application Support/Apple/AssetCache",
+    "~/Library/Sharing",
+    "~/Library/HomeKit",
+    "~/Library/Messages",
+    "~/Library/DuetExpertCenter",
+    "~/Pictures/Photos Library.photoslibrary",
+    "~/Movies/TV",
+    "~/Music/Music"
+  ],
+  "read": {
+    "default": "ask",
+    "allowed": [
+      "/Users/_/pie"
+    ]
+  },
+  "edit": {
+    "default": "ask",
+    "allowed": [
+      "/Users/_/pie"
+    ]
+  },
+  "write": {
+    "default": "ask",
+    "allowed": [
+      "/Users/_/pie"
+    ]
+  },
+  "fetch_content": {
+    "default": "ask",
+    "allowed": [
+      "/Users/_/pie"
+    ]
+  }
+};

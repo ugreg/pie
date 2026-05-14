@@ -6,12 +6,6 @@
     "@earendil-works/pi-coding-agent": "^0.74.0",
     "typescript": "^6.0.3"
   },
-  "scripts": {
-    "build": "tsc",
-    "test": "bun test",
-    "test:watch": "bun test --watch",
-    "test:coverage": "bun test --coverage"
-  },
   "engines": {
     "typescript": "^6.0.3"
   },
@@ -20,7 +14,10 @@
       "permissions.ts"
     ]
   },
-  "dependencies": {
-    "yaml": "^2.9.0"
+  "scripts": {
+    "build": "tsc",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage"
   }
 }
