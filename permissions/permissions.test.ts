@@ -15,15 +15,9 @@ import {
 import { PermissionConfig } from "./permissions.types";
 
 const TEST_CONFIG: PermissionConfig = {
-  ask: {
-    tools: ["edit", "write", "mcp", "skills", "special", "read", "web_search"]
-  },
-  allow: {
-    tools: ["find", "grep", "ls", "code_search", "fetch_content", "get_search_content"]
-  },
-  deny: {
-    bash: ["npm *", "rm *", "dd *", "kill *", "killall *", "nc *", "mv *", "exec"]
-  },
+  ask: ["edit", "write", "mcp", "skills", "special", "read", "web_search"],
+  allow: ["find", "grep", "ls", "code_search", "fetch_content", "get_search_content"],
+  deny: ["npm *", "rm *", "dd *", "kill *", "killall *", "nc *", "mv *"],
   paths: ["/Users/yo/.Trash", "/Users/yo/.pi/agent/extensions", "/Users/_/pie"]
 };
 
@@ -178,24 +172,20 @@ describe("Permission System", () => {
   });
 
   describe("Tools Object Handling", () => {
-    test("should get policy from tools object", () => {
+    test("should get policy from allow array", () => {
       const config: PermissionConfig = {
         paths: [],
-        allow: {
-          tools: ["edit", "read"]
-        }
+        allow: ["edit", "read"]
       };
       
       expect(getPolicy(config, "edit")).toBe("allow");
       expect(getPolicy(config, "read")).toBe("allow");
     });
 
-    test("should get policy from extensionTools object", () => {
+    test("should get policy from extensionTools array", () => {
       const config: PermissionConfig = {
         paths: [],
-        allow: {
-          tools: ["web_search", "code_search"]
-        }
+        allow: ["web_search", "code_search"]
       };
       
       expect(getPolicy(config, "web_search")).toBe("allow");
@@ -205,9 +195,7 @@ describe("Permission System", () => {
     test("should fallback to legacy properties", () => {
       const config: PermissionConfig = {
         paths: [],
-        ask: {
-          tools: ["edit", "write"]
-        }
+        ask: ["edit", "write"]
       };
       
       expect(getPolicy(config, "edit")).toBe("ask");
