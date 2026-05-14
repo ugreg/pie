@@ -14,6 +14,7 @@ interface PermissionConfig {
     bash?: string[];
   };
   paths?: string[];
+  error?: string;
 }
 
 interface ToolCallEvent {
@@ -29,14 +30,22 @@ interface SendOptions {
 const CONFIG_PATH = join(homedir(), ".pi", "permissions.json");
 
 function loadConfig(): PermissionConfig {
-  const configPath = CONFIG_PATH;
-  try {
-    const raw = readFileSync(configPath, "utf-8");
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
-}
+   let raw = "";
+   try {
+     raw = readFileSync(CONFIG_PATH, "utf-8");
+     if (!raw.trim()) {
+       return { "error": "file is empty" };
+     }
+     const parsed = JSON.parse(raw);
+     return parsed;
+   } catch (e) {
+     if (e instanceof SyntaxError) {
+       return { "error": `malformed json: ${e.message}` };
+     } else {
+       return { "error": `error reading file: ${e}` };
+     }
+   }
+ }
 
 function saveConfig(config: PermissionConfig): void {
   const numSpaces = 2;
@@ -278,16 +287,22 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.on("tool_call" as any, async (event: any, ctx: ExtensionContext) => {
+    const cwd = process.cwd();
+    ctx.ui.notify(`Current path: (${cwd})`, "log");
+
     const config = loadConfig();
     if (!config) {
       ctx.ui.notify(`Config not loaded`, "error");
       ctx.abort();
       return;
     }
-    const cwd = process.cwd();
-    ctx.ui.notify(`WD (${cwd})`, "log");
 
-    if (config.paths && config.paths.length > 0) {
+    if (config.error && config.error.length > 0) {
+      ctx.ui.notify(`Aborting: (${config.error})`, "error");
+      ctx.abort();
+      return;
+    }
+    else if (config.paths && config.paths.length > 0) {
       if (!isPathAllowed(cwd, config.paths)) {
         ctx.ui.notify(`Aborting: Current directory (${cwd}) not in allowed paths`, "error");
         ctx.abort();

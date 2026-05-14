@@ -1,5 +1,6 @@
 import { test, expect, describe } from "bun:test";
 import { readFileSync } from "fs";
+import { join } from "path";
 import { homedir } from "os";
 
 import {
@@ -27,6 +28,15 @@ const TEST_CONFIG: PermissionConfig = {
 };
 
 describe("Permission System", () => {
+
+  describe("File io", () => {
+    test("should access permissions file in expected path", () => {
+      const config = loadConfig();
+      expect(config).not.toBeNull();
+      expect(config).not.toHaveProperty('error');
+    });
+  });
+
   describe("getPolicy", () => {
     test("should return ask for git command", () => {
       const config = TEST_CONFIG;
