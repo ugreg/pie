@@ -1,106 +1,31 @@
 {
-  "bash": {
-    "git *": {
-      "default": "ask",
-      "allowed": [
-        "/Users/me/repos",
-      ]
-    },
-    "npm *": {
-      "default": "ask",
-      "allowed": []
-    },
-    "rm *": {
-      "default": "deny",
-      "allowed": []
-    },
-    "dd *": {
-      "default": "deny",
-      "allowed": []
-    },
-    "kill *": {
-      "default": "deny",
-      "allowed": []
-    },
-    "killall *": {
-      "default": "deny",
-      "allowed": []
-    },
-    "nc *": {
-      "default": "deny",
-      "allowed": []
-    },
-    "mv *": {
-      "default": "deny",
-      "allowed": []
-    }
+  "ask": {
+    "tools": [
+      "edit",
+      "write"
+    ],
   },
-  "edit": {
-    "default": "ask",
-    "allowed": []
+  "allow": {
+    "tools": [
+      "find",
+      "grep",
+      "ls",
+      "read",
+      "code_search",
+      "fetch_content",
+      "get_search_content",
+      "web_search"
+    ],
   },
-  "exec": {
-    "default": "deny",
-    "allowed": []
+  "deny": {
+    "bash git *",
+    "bash npm *",
+    "bash rm *",
+    "bash dd *",
+    "bash kill *",
+    "bash killall *",
+    "bash nc *",
+    "bash mv *"
   },
-  "find": {
-    "default": "allow",
-    "allowed": []
-  },
-  "mcp": {
-    "default": "ask",
-    "allowed": []
-  },
-  "read": {
-    "default": "ask",
-    "allowed": []
-  },
-  "skills": {
-    "default": "ask",
-    "allowed": []
-  },
-  "special": {
-    "default": "ask",
-    "allowed": []
-  },
-  "write": {
-    "default": "deny",
-    "allowed": []
-  },
-  "tools": {
-    "default": "ask",
-    "allowed": []
-  },
-  "code_search": {
-    "default": "allow",
-    "allowed": []
-  },
-  "fetch_content": {
-    "default": "allow",
-    "allowed": []
-  },
-  "get_search_content": {
-    "default": "allow",
-    "allowed": []
-  },
-  "web_search": {
-    "default": "ask",
-    "allowed": [
-      "/Users/me",
-    ]
-  },
-  "restricted": [
-    "./dev/",
-    "./usr/sbin/",
-    "./private/etc/",
-    "./Library/Caches/com.apple.aned",
-    "./Library/Bluetooth",
-    "~/.Trash",
-    "./Library/Application Support/Apple/AssetCache",
-    "~/Library/Sharing",
-    "~/Library/HomeKit",
-    "~/Library/Messages",
-    "~/Movies/TV",
-    "~/Music/Music"
-  ]
+  "paths": []
 }

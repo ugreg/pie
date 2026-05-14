@@ -1,115 +1,141 @@
 import { test, expect, describe } from "bun:test";
 import { readFileSync } from "fs";
+import { homedir } from "os";
 
 import {
   getPolicy,
-  isPathRestricted,
+  loadConfig,
+  isPathAllowed,
   extractPathsFromCommand,
   getBashAllowed,
-  isPathAllowed
+  checkPermission
 } from "./permissions";
 
-import { CommandPolicy, BashPolicy, ToolPolicy, ExtensionToolsPolicy, PermissionConfig } from "./permissions.types";
+import { PermissionConfig } from "./permissions.types";
 
-import { join } from "path";
-import { homedir } from "os";
-
+const TEST_CONFIG: PermissionConfig = {
+  ask: {
+    tools: ["edit", "write", "mcp", "skills", "special", "read", "web_search"]
+  },
+  allow: {
+    tools: ["find", "grep", "ls", "code_search", "fetch_content", "get_search_content"]
+  },
+  deny: {
+    bash: ["npm *", "rm *", "dd *", "kill *", "killall *", "nc *", "mv *", "exec"]
+  },
+  paths: ["/Users/yo/.Trash", "/Users/yo/.pi/agent/extensions", "/Users/_/pie"]
+};
 
 describe("Permission System", () => {
   describe("getPolicy", () => {
-    test("should return deny for rm command", () => {
-      const policy = getPolicy(TEST_CONFIG, "bash", "rm /tmp/file");
-      expect(policy).toBe("deny");
-    });
-
     test("should return ask for git command", () => {
-      const policy = getPolicy(TEST_CONFIG, "bash", "git status");
+      const config = TEST_CONFIG;
+      const policy = getPolicy(config, "bash", "git status");
       expect(policy).toBe("ask");
     });
 
+    test("should return deny for rm command", () => {
+      const config = TEST_CONFIG;
+      const policy = getPolicy(config, "bash", "rm /tmp/file");
+      expect(policy).toBe("deny");
+    });
+
     test("should return allow for find tool", () => {
-      const policy = getPolicy(TEST_CONFIG, "find");
+      const config = TEST_CONFIG;
+      const policy = getPolicy(config, "find");
       expect(policy).toBe("allow");
     });
 
     test("should return ask for edit tool", () => {
-      const policy = getPolicy(TEST_CONFIG, "edit");
+      const config = TEST_CONFIG;
+      const policy = getPolicy(config, "edit");
       expect(policy).toBe("ask");
     });
 
-    test("should return deny for write tool", () => {
-      const policy = getPolicy(TEST_CONFIG, "write");
-      expect(policy).toBe("deny");
+    test("should return ask for write tool", () => {
+      const config = TEST_CONFIG;
+      const policy = getPolicy(config, "write");
+      expect(policy).toBe("ask");
     });
 
     test("should return ask for read tool", () => {
-      const policy = getPolicy(TEST_CONFIG, "read");
+      const config = TEST_CONFIG;
+      const policy = getPolicy(config, "read");
       expect(policy).toBe("ask");
     });
 
     test("should return ask for web_search tool", () => {
-      const policy = getPolicy(TEST_CONFIG, "web_search");
+      const config = TEST_CONFIG;
+      const policy = getPolicy(config, "web_search");
       expect(policy).toBe("ask");
     });
 
     test("should return allow for code_search tool", () => {
-      const policy = getPolicy(TEST_CONFIG, "code_search");
+      const config = TEST_CONFIG;
+      const policy = getPolicy(config, "code_search");
       expect(policy).toBe("allow");
     });
 
     test("should return ask for mcp tool", () => {
-      const policy = getPolicy(TEST_CONFIG, "mcp");
+      const config = TEST_CONFIG;
+      const policy = getPolicy(config, "mcp");
       expect(policy).toBe("ask");
     });
 
     test("should return ask for skills tool", () => {
-      const policy = getPolicy(TEST_CONFIG, "skills");
+      const config = TEST_CONFIG;
+      const policy = getPolicy(config, "skills");
       expect(policy).toBe("ask");
     });
 
     test("should return ask for special tool", () => {
-      const policy = getPolicy(TEST_CONFIG, "special");
+      const config = TEST_CONFIG;
+      const policy = getPolicy(config, "special");
       expect(policy).toBe("ask");
     });
 
-    test("should return deny for exec tool", () => {
-      const policy = getPolicy(TEST_CONFIG, "exec");
-      expect(policy).toBe("deny");
+    test("should return ask for exec tool", () => {
+      const config = TEST_CONFIG;
+      const policy = getPolicy(config, "exec");
+      expect(policy).toBe("ask");
     });
 
     test("should return ask for unknown tool", () => {
-      const policy = getPolicy(TEST_CONFIG, "unknown_tool");
+      const config = TEST_CONFIG;
+      const policy = getPolicy(config, "unknown_tool");
       expect(policy).toBe("ask");
     });
   });
 
-  describe("Restricted Path Handling", () => {
-    test("should detect restricted path in command", () => {
+  describe("Path Allowed Checking", () => {
+    test("should detect allowed path", () => {
       const config = TEST_CONFIG;
-      const command = `cat ${join(homedir(), '.Trash')}`;
-      const paths = extractPathsFromCommand(command);
-      const isRestricted = paths.some(p => isPathRestricted(p, config.restricted));
-      expect(isRestricted).toBe(true);
+      const isAllowed = isPathAllowed("/Users/_/pie", config.paths);
+      expect(isAllowed).toBe(true);
     });
 
-    test("should not detect non-restricted path", () => {
+    test("should detect allowed child path", () => {
       const config = TEST_CONFIG;
-      const command = "cat /Users/_/pie/file.txt";
-      const paths = extractPathsFromCommand(command);
-      const isRestricted = paths.some(p => isPathRestricted(p, config.restricted));
-      expect(isRestricted).toBe(false);
+      const isAllowed = isPathAllowed("/Users/_/pie/permissions", config.paths);
+      expect(isAllowed).toBe(true);
+    });
+
+    test("should detect non-allowed path", () => {
+      const config = TEST_CONFIG;
+      const isAllowed = isPathAllowed("/Users/other/path", config.paths);
+      expect(isAllowed).toBe(false);
     });
   });
 
   describe("Error Handling", () => {
     test("should handle missing config gracefully", () => {
-      const config: PermissionConfig = { restricted: [] };
+      const config: PermissionConfig = { paths: [] };
       const policy = getPolicy(config, "edit");
       expect(policy).toBe("ask");
     });
 
     test("should handle ill-formatted JSON gracefully", () => {
-      const config: PermissionConfig = { restricted: [] };
+      const config: PermissionConfig = { paths: [] };
       const policy = getPolicy(config, "edit");
       expect(policy).toBe("ask");
     });
@@ -117,22 +143,26 @@ describe("Permission System", () => {
 
   describe("Bash Command Matching", () => {
     test("should match exact command", () => {
-      const policy = getPolicy(TEST_CONFIG, "bash", "git status");
+      const config = TEST_CONFIG;
+      const policy = getPolicy(config, "bash", "git status");
       expect(policy).toBe("ask");
     });
 
     test("should match wildcard command", () => {
-      const policy = getPolicy(TEST_CONFIG, "bash", "git commit -m 'test'");
+      const config = TEST_CONFIG;
+      const policy = getPolicy(config, "bash", "git commit -m 'test'");
       expect(policy).toBe("ask");
     });
 
     test("should deny dangerous commands", () => {
-      const policy = getPolicy(TEST_CONFIG, "bash", "rm -rf /");
+      const config = TEST_CONFIG;
+      const policy = getPolicy(config, "bash", "rm -rf /");
       expect(policy).toBe("deny");
     });
 
     test("should deny kill commands", () => {
-      const policy = getPolicy(TEST_CONFIG, "bash", "kill -9 1234");
+      const config = TEST_CONFIG;
+      const policy = getPolicy(config, "bash", "kill -9 1234");
       expect(policy).toBe("deny");
     });
   });
@@ -140,181 +170,38 @@ describe("Permission System", () => {
   describe("Tools Object Handling", () => {
     test("should get policy from tools object", () => {
       const config: PermissionConfig = {
-        restricted: [],
-        tools: {
-          edit: { default: "allow", allowed: [] },
-          read: { default: "deny", allowed: [] }
+        paths: [],
+        allow: {
+          tools: ["edit", "read"]
         }
       };
       
       expect(getPolicy(config, "edit")).toBe("allow");
-      expect(getPolicy(config, "read")).toBe("deny");
+      expect(getPolicy(config, "read")).toBe("allow");
     });
 
     test("should get policy from extensionTools object", () => {
       const config: PermissionConfig = {
-        restricted: [],
-        extensionTools: {
-          web_search: { default: "allow", allowed: [] },
-          code_search: { default: "deny", allowed: [] }
+        paths: [],
+        allow: {
+          tools: ["web_search", "code_search"]
         }
       };
       
       expect(getPolicy(config, "web_search")).toBe("allow");
-      expect(getPolicy(config, "code_search")).toBe("deny");
+      expect(getPolicy(config, "code_search")).toBe("allow");
     });
 
     test("should fallback to legacy properties", () => {
       const config: PermissionConfig = {
-        restricted: [],
-        edit: { default: "allow", allowed: [] },
-        write: { default: "deny", allowed: [] }
+        paths: [],
+        ask: {
+          tools: ["edit", "write"]
+        }
       };
       
-      expect(getPolicy(config, "edit")).toBe("allow");
-      expect(getPolicy(config, "write")).toBe("deny");
+      expect(getPolicy(config, "edit")).toBe("ask");
+      expect(getPolicy(config, "write")).toBe("ask");
     });
   });
 });
-
-const TEST_CONFIG: PermissionConfig = {
-  "bash": {
-    "git *": {
-      "default": "ask",
-      "allowed": []
-    },
-    "npm *": {
-      "default": "ask",
-      "allowed": []
-    },
-    "rm *": {
-      "default": "deny",
-      "allowed": []
-    },
-    "dd *": {
-      "default": "deny",
-      "allowed": []
-    },
-    "kill *": {
-      "default": "deny",
-      "allowed": []
-    },
-    "killall *": {
-      "default": "deny",
-      "allowed": []
-    },
-    "nc *": {
-      "default": "deny",
-      "allowed": []
-    },
-    "mv *": {
-      "default": "deny",
-      "allowed": []
-    },
-    "allowed": []
-  },
-  "tools": {
-    "edit": {
-      "default": "ask",
-      "allowed": []
-    },
-    "find": {
-      "default": "allow",
-      "allowed": []
-    },
-    "grep": {
-      "default": "allow",
-      "allowed": []
-    },
-    "ls": {
-      "default": "allow",
-      "allowed": []
-    },
-    "read": {
-      "default": "ask",
-      "allowed": [
-        "/Users/_/pie"
-      ]
-    },
-    "write": {
-      "default": "deny",
-      "allowed": []
-    }
-  },
-  "exec": {
-    "default": "deny",
-    "allowed": []
-  },
-  "mcp": {
-    "default": "ask",
-    "allowed": []
-  },
-  "skills": {
-    "default": "ask",
-    "allowed": []
-  },
-  "special": {
-    "default": "ask",
-    "allowed": []
-  },
-  "extensionTools": {
-    "code_search": {
-      "default": "allow",
-      "allowed": []
-    },
-    "fetch_content": {
-      "default": "allow",
-      "allowed": []
-    },
-    "get_search_content": {
-      "default": "allow",
-      "allowed": []
-    },
-    "web_search": {
-      "default": "ask",
-      "allowed": []
-    }
-  },
-  "restricted": [
-    "./dev/",
-    "./usr/sbin/",
-    "./private/etc/cups/",
-    "./Library/Caches/com.apple.aned",
-    "./Library/Bluetooth",
-    "./Library/Trial",
-    "~/.Trash",
-    "./Library/Application Support/com.apple.TCC",
-    "./Library/Application Support/Apple/AssetCache",
-    "~/Library/Sharing",
-    "~/Library/HomeKit",
-    "~/Library/Messages",
-    "~/Library/DuetExpertCenter",
-    "~/Pictures/Photos Library.photoslibrary",
-    "~/Movies/TV",
-    "~/Music/Music"
-  ],
-  "read": {
-    "default": "ask",
-    "allowed": [
-      "/Users/_/pie"
-    ]
-  },
-  "edit": {
-    "default": "ask",
-    "allowed": [
-      "/Users/_/pie"
-    ]
-  },
-  "write": {
-    "default": "ask",
-    "allowed": [
-      "/Users/_/pie"
-    ]
-  },
-  "fetch_content": {
-    "default": "ask",
-    "allowed": [
-      "/Users/_/pie"
-    ]
-  }
-};
