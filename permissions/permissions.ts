@@ -1,4 +1,5 @@
 import { readFileSync, writeFileSync, existsSync } from "fs";
+import * as yaml from "yaml";
 import { join } from "path";
 import { homedir } from "os";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
@@ -15,7 +16,7 @@ interface SendOptions {
   deliverAs: string;
 }
 
-const CONFIG_PATH = join(homedir(), ".pi", "permissions.json");
+const CONFIG_PATH = join(homedir(), ".pi", "permissions.yaml");
 
 function loadConfig(): PermissionConfig {
   const configPath = CONFIG_PATH;
@@ -24,9 +25,10 @@ function loadConfig(): PermissionConfig {
       restricted: [],
     };
   }
+  
   try {
     const raw = readFileSync(configPath, "utf-8");
-    return JSON.parse(raw);
+    return yaml.parse(raw) as PermissionConfig;
   } catch {
     return {
       restricted: [],
@@ -35,8 +37,7 @@ function loadConfig(): PermissionConfig {
 }
 
 function saveConfig(config: PermissionConfig): void {
-  const numSpaces = 2;
-  writeFileSync(CONFIG_PATH, JSON.stringify(config, null, numSpaces));
+  writeFileSync(CONFIG_PATH, yaml.stringify(config));
 }
 
 function matchCommand(cmd: string, pattern: string): boolean {
@@ -79,9 +80,9 @@ function getToolPolicy(config: PermissionConfig, key: string): ToolPolicy | unde
     return config.extensionTools[key];
   }
   
-  const legacyPolicy = config[key as keyof PermissionConfig];
-  if (legacyPolicy && typeof legacyPolicy === "object") {
-    return legacyPolicy as ToolPolicy;
+  const rootPolicy = config[key as keyof PermissionConfig];
+  if (rootPolicy && typeof rootPolicy === "object") {
+    return rootPolicy as ToolPolicy;
   }
   
   return undefined;
@@ -104,12 +105,6 @@ function getPolicy(config: PermissionConfig, key: string, command?: string): "al
     return toolPolicy.default || "ask";
   }
 
-  const policyConfig = config[key as keyof PermissionConfig];
-  
-  if (policyConfig && typeof policyConfig === "object") {
-    return (policyConfig as ToolPolicy).default || "ask";
-  }
-
   return "ask";
 }
 
@@ -126,8 +121,7 @@ function getBashAllowed(config: PermissionConfig, key: string): string[] {
     return getPolicyAllowed(toolPolicy);
   }
   
-  const policyConfig = config[key as keyof PermissionConfig];
-  return getPolicyAllowed(policyConfig as ToolPolicy | BashPolicy | undefined);
+  return [];
 }
 
 function isPathAllowed(path: string, allowed: string[]): boolean {

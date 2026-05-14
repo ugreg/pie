@@ -29,12 +29,4 @@ export interface PermissionConfig {
   skills?: ToolPolicy;
   special?: ToolPolicy;
   extensionTools?: ExtensionToolsPolicy;
-  code_search?: ToolPolicy;
-  edit?: ToolPolicy;
-  fetch_content?: ToolPolicy;
-  find?: ToolPolicy;
-  get_search_content?: ToolPolicy;
-  web_search?: ToolPolicy;
-  write?: ToolPolicy;
-  read?: ToolPolicy;
 }

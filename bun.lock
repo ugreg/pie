@@ -12,6 +12,9 @@
     "permissions": {
       "name": "@ugreg/pi-agent-permission-system-lite",
       "version": "0.1.0",
+      "dependencies": {
+        "yaml": "^2.9.0",
+      },
       "devDependencies": {
         "@earendil-works/pi-coding-agent": "^0.74.0",
         "typescript": "^6.0.3",

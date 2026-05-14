@@ -19,5 +19,8 @@
     "extensions": [
       "permissions.ts"
     ]
+  },
+  "dependencies": {
+    "yaml": "^2.9.0"
   }
 }
