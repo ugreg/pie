@@ -2,6 +2,8 @@
 
 Monorepo with multiple packages and security checks.
 
+https://github.com/MasuRii/pi-permission-system
+
 ## Setup
 
 ### 1. Install Required Tools

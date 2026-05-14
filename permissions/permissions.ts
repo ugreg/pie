@@ -304,6 +304,7 @@ export default function (pi: ExtensionAPI) {
     }
 
     if (policy === "allow") return;
+
     if (policy === "deny") {
       const choice = await showPermissionDialog(
         `Permission request (${toolName})`,
@@ -313,26 +314,21 @@ export default function (pi: ExtensionAPI) {
       sendPermissionNotification(toolName, choice, ctx);
       if (choice === "allow_once") return;
       if (choice === "allow_always") {
-        await addCwdToConfig(toolName, ctx, pi);
+        await addCwdToConfig(toolName, ctx, pi);  
         return;
       }
-      return true;
+      ctx.abort();
     }
-    const choice = await showPermissionDialog(
-      `Permission request (${toolName})`,
-      resource,
-      ctx,
-    );
-
-    sendPermissionNotification(toolName, choice, ctx);
-
     if (choice === "allow_once") {
+      sendPermissionNotification(toolName, choice, ctx);
       return;
     } else if (choice === "allow_always") {
+      sendPermissionNotification(toolName, choice, ctx);
       await addCwdToConfig(toolName, ctx, pi);
       return;
+    } else {
+      ctx.abort();
     }
-    return true;
   });
 }
 
