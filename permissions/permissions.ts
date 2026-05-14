@@ -3,16 +3,7 @@ import { join } from "path";
 import { homedir } from "os";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
-interface Policy {
-  default?: string;
-  allowed?: string[];
-  commands?: Record<string, Policy>;
-}
-
-interface PermissionConfig {
-  restricted: string[];
-  [key: string]: string[] | string | Policy | undefined;
-}
+import { CommandPolicy, BashPolicy, ToolPolicy, ExtensionToolsPolicy, PermissionConfig } from "./permissions.types";
 
 interface ToolCallEvent {
   toolName: string;
@@ -61,38 +52,82 @@ function matchCommand(cmd: string, pattern: string): boolean {
   return false;
 }
 
-function getPolicy(config: PermissionConfig, key: string, command?: string): "allow" | "deny" | "ask" | string {
-  if (command && key === "bash") {
-    const keyConfig = config[key];
-    if (keyConfig && typeof keyConfig === "object" && "commands" in keyConfig) {
-      const commandsConfig = keyConfig.commands;
-      if (commandsConfig && typeof commandsConfig === "object") {
-        for (const [pattern, policy] of Object.entries(commandsConfig)) {
-          if (matchCommand(command, pattern)) {
-            if (typeof policy === "object" && policy !== null && "default" in policy) {
-              return (policy as Policy).default || "ask";
-            }
-          }
-        }
-      }
+function getBashCommands(bashPolicy: BashPolicy | undefined): Record<string, CommandPolicy> | undefined {
+  return bashPolicy as Record<string, CommandPolicy>;
+}
+
+function findMatchingCommandPolicy(
+  commands: Record<string, CommandPolicy> | undefined,
+  command: string
+): string {
+  if (!commands) return "ask";
+  
+  for (const [pattern, policy] of Object.entries(commands)) {
+    if (matchCommand(command, pattern)) {
+      return policy.default || "ask";
     }
-  }
-  const policyConfig = config[key];
-  if (typeof policyConfig === "string") {
-    return policyConfig;
-  }
-  if (typeof policyConfig === "object" && policyConfig !== null && "default" in policyConfig) {
-    return (policyConfig as Policy).default || "ask";
   }
   return "ask";
 }
 
-function getBashAllowed(config: PermissionConfig, key: string): string[] {
-  const policyConfig = config[key];
-  if (typeof policyConfig === "object" && policyConfig !== null && "allowed" in policyConfig) {
-    return (policyConfig as Policy).allowed || [];
+function getToolPolicy(config: PermissionConfig, key: string): ToolPolicy | undefined {
+  if (config.tools && config.tools[key]) {
+    return config.tools[key];
+  }
+  
+  if (config.extensionTools && config.extensionTools[key]) {
+    return config.extensionTools[key];
+  }
+  
+  const legacyPolicy = config[key as keyof PermissionConfig];
+  if (legacyPolicy && typeof legacyPolicy === "object") {
+    return legacyPolicy as ToolPolicy;
+  }
+  
+  return undefined;
+}
+
+function getPolicy(config: PermissionConfig, key: string, command?: string): "allow" | "deny" | "ask" {
+  if (command && key === "bash") {
+    const bashPolicy = config.bash;
+    const commands = getBashCommands(bashPolicy);
+    if (commands) {
+      const matchedPolicy = findMatchingCommandPolicy(commands, command);
+      if (matchedPolicy !== "ask") {
+        return matchedPolicy as "allow" | "deny" | "ask";
+      }
+    }
+  }
+
+  const toolPolicy = getToolPolicy(config, key);
+  if (toolPolicy) {
+    return toolPolicy.default || "ask";
+  }
+
+  const policyConfig = config[key as keyof PermissionConfig];
+  
+  if (policyConfig && typeof policyConfig === "object") {
+    return (policyConfig as ToolPolicy).default || "ask";
+  }
+
+  return "ask";
+}
+
+function getPolicyAllowed(policy: ToolPolicy | BashPolicy | undefined): string[] {
+  if (policy && typeof policy === "object") {
+    return (policy as ToolPolicy).allowed || [];
   }
   return [];
+}
+
+function getBashAllowed(config: PermissionConfig, key: string): string[] {
+  const toolPolicy = getToolPolicy(config, key);
+  if (toolPolicy) {
+    return getPolicyAllowed(toolPolicy);
+  }
+  
+  const policyConfig = config[key as keyof PermissionConfig];
+  return getPolicyAllowed(policyConfig as ToolPolicy | BashPolicy | undefined);
 }
 
 function isPathAllowed(path: string, allowed: string[]): boolean {
@@ -111,7 +146,7 @@ function isPathRestricted(path: string, restricted: string[]): boolean {
 
 function extractPathsFromCommand(cmd: string): string[] {
   const paths: string[] = [];
-  const regex = /["']([^"']+)["']|\b(?:\/[\w.-]+)+/g;
+  const regex = /["']([^"']+)["']|(?:\/[^\s]+)+/g;
   let match;
   while ((match = regex.exec(cmd)) !== null) {
     paths.push(match[1] || match[0]);
@@ -156,19 +191,54 @@ async function addCwdToConfig(
   }
 
   const key = toolName === "bash" ? "bash" : toolName;
-  if (!config[key] || typeof config[key] !== "object") {
-    config[key] = { default: "ask", allowed: [] };
-  }
+  
+  if (key === "bash") {
+    if (!config[key] || typeof config[key] !== "object") {
+      config[key] = {} as BashPolicy;
+    }
+    
+  } else {
+    let policyObj = config[key as keyof PermissionConfig];
+    let isToolsObject = false;
+    
+    if (config.tools && config.tools[key]) {
+      policyObj = config.tools[key];
+      isToolsObject = true;
+    }
+    else if (config.extensionTools && config.extensionTools[key]) {
+      policyObj = config.extensionTools[key];
+      isToolsObject = true;
+    }
+    
+    if (!policyObj || typeof policyObj !== "object") {
+      if (isToolsObject) {
+        if (!config.tools) config.tools = {};
+        if (!config.extensionTools) config.extensionTools = {};
+        (config.tools as ExtensionToolsPolicy)[key] = { default: "ask", allowed: [] };
+        (config.extensionTools as ExtensionToolsPolicy)[key] = { default: "ask", allowed: [] };
+      } else {
+        config[key] = { default: "ask", allowed: [] } as ToolPolicy;
+      }
+    }
 
-  const keyConfig = config[key];
-  if (keyConfig && typeof keyConfig === "object" && !(keyConfig as Policy).allowed) {
-    (config[key] as Policy).allowed = [];
-  }
+    const keyConfig = isToolsObject ? (config.tools as ExtensionToolsPolicy)[key] : config[key];
+    if (keyConfig && typeof keyConfig === "object" && !(keyConfig as ToolPolicy).allowed) {
+      if (isToolsObject) {
+        (config.tools as ExtensionToolsPolicy)[key].allowed = [];
+      } else {
+        (config[key] as ToolPolicy).allowed = [];
+      }
+    }
 
-  const cwd = process.cwd();
-  const configAsPolicy = config[key] as Policy;
-  if (configAsPolicy && configAsPolicy.allowed && !configAsPolicy.allowed.includes(cwd)) {
-    configAsPolicy.allowed.push(cwd);
+    const cwd = process.cwd();
+    const configAsPolicy = isToolsObject ? (config.tools as ExtensionToolsPolicy)[key] : (config[key] as ToolPolicy);
+    if (configAsPolicy && configAsPolicy.allowed && !configAsPolicy.allowed.includes(cwd)) {
+      if (isToolsObject) {
+        (config.tools as ExtensionToolsPolicy)[key].allowed.push(cwd);
+      } else {
+        (config[key] as ToolPolicy).allowed.push(cwd);
+      }
+    }
   }
 
   saveConfig(config);
@@ -201,20 +271,24 @@ export default function (pi: ExtensionAPI) {
         return true;
       }
 
-      policy = getPolicy(config, "bash", bashEvent.input.command) as "allow" | "deny" | "ask" | string;
+      policy = getPolicy(config, "bash", bashEvent.input.command);
 
-      const allowed = getBashAllowed(config, "bash");
-      if (Array.isArray(allowed) && isPathAllowed(cwd, allowed)) {
-        return;
+      if (policy === "ask") {
+        const allowed = getBashAllowed(config, "bash");
+        if (Array.isArray(allowed) && isPathAllowed(cwd, allowed)) {
+          return;
+        }
       }
     } else {
       toolName = event.toolName;
       resource = `${event.toolName} tool`;
-      policy = getPolicy(config, toolName) as "allow" | "deny" | "ask" | string;
+      policy = getPolicy(config, toolName);
 
-      const allowed = getBashAllowed(config, toolName);
-      if (Array.isArray(allowed) && isPathAllowed(cwd, allowed)) {
-        return;
+      if (policy === "ask") {
+        const allowed = getBashAllowed(config, toolName);
+        if (Array.isArray(allowed) && isPathAllowed(cwd, allowed)) {
+          return;
+        }
       }
     }
 
@@ -247,3 +321,12 @@ export default function (pi: ExtensionAPI) {
     return true;
   });
 }
+
+export {
+  getPolicy,
+  loadConfig,
+  isPathRestricted,
+  extractPathsFromCommand,
+  getBashAllowed,
+  isPathAllowed
+};

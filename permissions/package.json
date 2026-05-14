@@ -4,9 +4,6 @@
   "main": "permissions.ts",
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "^0.74.0",
-    "@types/jest": "^30.0.0",
-    "jest": "^30.4.2",
-    "ts-jest": "^29.4.9",
     "typescript": "^6.0.3"
   },
   "scripts": {
