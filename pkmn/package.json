@@ -1,16 +1,16 @@
 {
-  "name": "@ugreg/pkmn",
-  "version": "0.0.0",
+  "name": "@ugreg/pi-agent-pkmn",
+  "version": "0.1.0",
   "main": "pkmn.ts",
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "^0.74.0",
     "typescript": "^6.0.3"
   },
   "scripts": {
-    "build": "tsc --noEmit"
+    "build": "tsc"
   },
   "engines": {
-    "typescript": ">=5.4.0"
+    "typescript": "^6.0.3"
   },
   "pi": {
     "extensions": [

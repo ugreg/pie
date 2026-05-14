@@ -14,7 +14,7 @@ brew install semgrep
 ### 2. Install Dependencies
 
 ```bash
-npm install
+bun install
 ```
 
 This will automatically run `husky install` via the `prepare` script.
@@ -31,15 +31,4 @@ npm run security:check
 
 ```bash
 bash .husky/pre-commit
-```
-
-**Note:** If you get `ENOLOCK` error, run `npm i --package-lock-only` first.
-
-## Workspace Commands
-
-### Run in All Workspaces
-
-```bash
-npm run build --workspaces
-npm run test --workspaces
 ```

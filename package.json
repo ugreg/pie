@@ -9,7 +9,7 @@
   "scripts": {
     "prepare": "husky",
     "lint": "npx oxlint permissions/ pkmn/",
-    "build": "pnpm --filter './permissions' build && pnpm --filter './pkmn' build"
+    "build": "bun run --cwd permissions build && bun run --cwd pkmn build"
   },
   "devDependencies": {
     "husky": "^9.1.7",

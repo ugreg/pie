@@ -1,16 +1,22 @@
 {
-  "name": "@ugreg/permissions",
-  "version": "0.0.0",
+  "name": "@ugreg/pi-agent-permissions-lite",
+  "version": "0.1.0",
   "main": "permissions.ts",
   "devDependencies": {
     "@earendil-works/pi-coding-agent": "^0.74.0",
+    "@types/jest": "^30.0.0",
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.9",
     "typescript": "^6.0.3"
   },
   "scripts": {
-    "build": "tsc --noEmit"
+    "build": "tsc",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage"
   },
   "engines": {
-    "typescript": ">=5.4.0"
+    "typescript": "^6.0.3"
   },
   "pi": {
     "extensions": [
