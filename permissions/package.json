@@ -1,5 +1,5 @@
 {
-  "name": "@ugreg/pi-agent-permissions-lite",
+  "name": "@ugreg/pi-agent-permission-system-lite",
   "version": "0.1.0",
   "main": "permissions.ts",
   "devDependencies": {
