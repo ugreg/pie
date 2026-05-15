@@ -48,15 +48,6 @@ function isPathAllowed(path: string, allowed: string[] | undefined): boolean {
   });
 }
 
-function isPathRestricted(path: string, restricted: string[]): boolean {
-  const normalized = path.replace(/\\/g, "/");
-  const home = homedir();
-  return restricted.some((restrictedPath) => {
-    const resolved = restrictedPath.replace("~", home);
-    return normalized === resolved || normalized.startsWith(resolved + "/");
-  });
-}
-
 function extractPathsFromCommand(cmd: string): string[] {
   const paths: string[] = [];
   const regex = /["']([^"']+)["']|(?:\/[^\s]+)+/g;
@@ -235,6 +226,5 @@ export {
   getPolicy,
   loadConfig,
   isPathAllowed,
-  isPathRestricted,
   extractPathsFromCommand
 };
