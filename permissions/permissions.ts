@@ -3,7 +3,7 @@ import { join } from "path";
 import { homedir } from "os";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
-import { PermissionConfig, ToolCallEvent, SendOptions } from "./permissions.types";
+import { BashCommand, PermissionConfig, ToolCallEvent, SendOptions } from "./permissions.types";
 
 const CONFIG_PATH = join(homedir(), ".pi", "permissions.json");
 
@@ -37,6 +37,14 @@ function isBashCommand(cmd: string): boolean {
   }
 
   return false;
+}
+
+function extractBashCommand(event: any): BashCommand {
+  let bc: BashCommand = { command: "", args: "" };
+  bc.command = event.input.command;
+  bc.args = event.input.command.split(" ")[0];
+
+  return bc;
 }
 
 function isPathAllowed(path: string, allowed: string[] | undefined): boolean {
@@ -186,16 +194,18 @@ export default function (pi: ExtensionAPI) {
 
     let toolName: string;
     let fullCommand: string;
+    let bashCmd: BashCommand;
     let policy: "allow" | "deny" | "ask" | string;
 
     ctx.ui.notify(`Tool: ${event.toolName}`, "info");
     
     toolName = event.toolName;
     fullCommand = "";
+    bashCmd = { command: "", args: "" };
     if (event.toolName === "bash" && event.input.command && isBashCommand(event.input.command)) {
-      fullCommand = event.input.command;
-      const bashCommand = event.input.command.split(" ")[0];
-      toolName = bashCommand;
+      bashCmd = extractBashCommand(event);
+      fullCommand = bashCmd.args;
+      toolName = bashCmd.command;
     }
     policy = getPolicy(config, toolName);
 
@@ -223,6 +233,7 @@ export default function (pi: ExtensionAPI) {
 }
 
 export {
+  extractBashCommand,
   getPolicy,
   loadConfig,
   isPathAllowed,
