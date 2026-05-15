@@ -30,16 +30,12 @@ function saveConfig(config: PermissionConfig): void {
   writeFileSync(CONFIG_PATH, JSON.stringify(config, null, numSpaces));
 }
 
-function matchCommand(cmd: string, pattern: string): boolean {
-  if (cmd === pattern) {
-    return true;
-  }
-  
-  if (pattern.endsWith(" *")) {
-    const prefix = pattern.slice(0, -2);
+function isBashCommand(cmd: string): boolean {
+  if (cmd.endsWith(" *")) {
+    const prefix = cmd.slice(0, -2);
     return cmd.startsWith(prefix + " ");
   }
-  
+
   return false;
 }
 
@@ -71,7 +67,7 @@ function extractPathsFromCommand(cmd: string): string[] {
   return paths;
 }
 
-function getToolPolicy(config: PermissionConfig, toolName: string): "allow" | "deny" | "ask" {
+function getPolicy(config: PermissionConfig, toolName: string): "allow" | "deny" | "ask" {
   if (config.allow?.includes(toolName)) {
     return "allow";
   }
@@ -84,41 +80,13 @@ function getToolPolicy(config: PermissionConfig, toolName: string): "allow" | "d
     return "ask";
   }
   
-  return "ask";
-}
-
-function getBashPolicy(config: PermissionConfig, command: string): "allow" | "deny" | "ask" {
-  if (config.deny) {
-    for (const pattern of config.deny) {
-      if (matchCommand(command, pattern)) {
-        return "deny";
-      }
-    }
-  }
-  
-  if (config.allow) {
-    for (const tool of config.allow) {
-      if (tool === command || (tool.endsWith(" *") && command.startsWith(tool.slice(0, -2) + " "))) {
-        return "allow";
-      }
-    }
-  }
-  
-  if (config.ask) {
-    for (const tool of config.ask) {
-      if (tool === command || (tool.endsWith(" *") && command.startsWith(tool.slice(0, -2) + " "))) {
-        return "ask";
-      }
-    }
-  }
-  
-  return "ask";
+  return "deny";
 }
 
 async function showPermissionDialog(
-  action: string,
-  resource: string,
   ctx: ExtensionContext,
+  action: string,
+  resource: string
 ): Promise<"allow_once" | "allow_always" | "reject"> {
   if (ctx.hasUI) {
     const options = ["Allow once", "Allow always", "Reject"];
@@ -131,10 +99,10 @@ async function showPermissionDialog(
 }
 
 function sendPermissionNotification(
-  toolName: string,
-  resource: string,
-  decision: "allow_once" | "allow_always" | "reject",
   ctx: ExtensionContext,
+  toolName: string,
+  cmd: string,
+  decision: "allow_once" | "allow_always" | "reject"
 ): void {
 
   const statusMessage = decision === "reject"
@@ -146,7 +114,7 @@ function sendPermissionNotification(
   let toolNotice = "";
   
   if (toolName === "bash") {
-    toolNotice = `${statusMessage} Permission request (${toolName}) tool command: ${resource}`;
+    toolNotice = `${statusMessage} Permission request (${toolName}) tool command: ${cmd}`;
   } else {
     toolNotice = `${statusMessage} Permission request (${toolName}) tool`;
   }
@@ -155,9 +123,9 @@ function sendPermissionNotification(
 }
 
 async function addCwdToConfig(
-  toolName: string,
   ctx: ExtensionContext,
   pi: ExtensionAPI,
+  toolName: string
 ): Promise<void> {
   let config: PermissionConfig;
   try {
@@ -179,87 +147,6 @@ async function addCwdToConfig(
   writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
   
   ctx.ui.notify(`Added ${cwd} to allowed paths for ${toolName}`, "info");
-}
-
-async function checkPermission(
-  pi: ExtensionAPI,
-  ctx: ExtensionContext,
-  event: ToolCallEvent,
-): Promise<{ block: boolean; reason?: string }> {
-  const config = loadConfig();
-  const cwd = process.cwd();
-  
-  if (config.paths && config.paths.length > 0) {
-    if (!isPathAllowed(cwd, config.paths)) {
-      return { block: true, reason: "Current directory not in allowed paths" };
-    }
-  }
-  
-  let toolName = event.toolName;
-  let policy: "allow" | "deny" | "ask";
-  let resource = `${toolName} tool`;
-  
-  if (event.toolName === "bash" && event.input.command) {
-    toolName = "bash";
-    resource = event.input.command;
-    policy = getBashPolicy(config, event.input.command);
-  } else {
-    policy = getToolPolicy(config, toolName);
-  }
-  
-  if (policy === "allow") {
-    return { block: false };
-  }
-  
-  if (policy === "deny") {
-    const choice = await showPermissionDialog(
-      `Permission request (${toolName})`,
-      resource,
-      ctx,
-    );
-
-    sendPermissionNotification(toolName, resource, choice, ctx);
-    
-    if (choice === "allow_once") {
-      return { block: false };
-    }
-    
-    if (choice === "allow_always") {
-      return { block: false };
-    }
-    
-    return { block: true, reason: "Permission denied by user" };
-  }
-  
-  const choice = await showPermissionDialog(
-    `Permission request (${toolName})`,
-    resource,
-    ctx,
-  );
-  
-  sendPermissionNotification(toolName, resource, choice, ctx);
-  
-  if (choice === "allow_once") {
-    return { block: false };
-  }
-  
-  if (choice === "allow_always") {
-    return { block: false };
-  }
-  
-  return { block: true, reason: "Permission denied by user" };
-}
-
-function getPolicy(config: PermissionConfig, key: string, command?: string): "allow" | "deny" | "ask" {
-  if (command && key === "bash") {
-    return getBashPolicy(config, command);
-  }
-  return getToolPolicy(config, key);
-}
-
-function getBashAllowed(config: PermissionConfig, key: string): string[] {
-  const policy = getBashPolicy(config, key);
-  return policy === "allow" ? [] : [];
 }
 
 export default function (pi: ExtensionAPI) {
@@ -286,8 +173,7 @@ export default function (pi: ExtensionAPI) {
       ctx.ui.notify(`Aborting: (${config.error})`, "error");
       ctx.abort();
       return;
-    }
-    else if (config.paths && config.paths.length > 0) {
+    } else if (config.paths && config.paths.length > 0) {
       if (!isPathAllowed(cwd, config.paths)) {
         ctx.ui.notify(`Aborting: Current directory (${cwd}) not in allowed paths`, "error");
         ctx.abort();
@@ -299,79 +185,47 @@ export default function (pi: ExtensionAPI) {
       return;
     }
 
+    if (config.paths && config.paths.length > 0) {
+      if (!isPathAllowed(cwd, config.paths)) {
+        ctx.ui.notify(`Aborting: Current directory (${cwd}) not in allowed paths`, "error");
+        ctx.abort();
+        return true;
+      }
+    }
+
     let toolName: string;
-    let resource: string;
+    let fullCommand: string;
     let policy: "allow" | "deny" | "ask" | string;
 
     ctx.ui.notify(`Tool: ${event.toolName}`, "info");
-    if (event.toolName === "bash") {
-      const bashEvent = event as ToolCallEvent;
-      toolName = "bash";
-      resource = bashEvent.input.command;
-      ctx.ui.notify(`Bash: ${resource}`, "info");
-
-      const commandPaths = extractPathsFromCommand(bashEvent.input.command);
-      if (config.paths && config.paths.length > 0) {
-        if (commandPaths.some(p => !isPathAllowed(p, config.paths))) {
-          ctx.ui.notify(`Aborting: Command accesses restricted path`, "error");
-          ctx.abort();
-          return;
-        }
-      }
-
-      policy = getPolicy(config, "bash", bashEvent.input.command);
-
-      if (policy === "ask") {
-        const allowed = getBashAllowed(config, "bash");
-        if (Array.isArray(allowed) && isPathAllowed(cwd, allowed)) {
-          return;
-        }
-      }
-    } else {
-      toolName = event.toolName;
-      resource = `${event.toolName} tool`;
-      policy = getPolicy(config, toolName);
-
-      if (config.paths && config.paths.length > 0) {
-        if (!isPathAllowed(cwd, config.paths)) {
-          ctx.ui.notify(`Aborting: Current directory (${cwd}) not in allowed paths`, "error");
-          ctx.abort();
-          return true;
-        }
-      }
-
-      if (policy === "ask") {
-        const allowed = getBashAllowed(config, toolName);
-        if (Array.isArray(allowed) && isPathAllowed(cwd, allowed)) {
-          return;
-        }
-      }
+    
+    toolName = event.toolName;
+    fullCommand = "";
+    if (event.toolName === "bash" && event.input.command && isBashCommand(event.input.command)) {
+      fullCommand = event.input.command;
+      const bashCommand = event.input.command.split(" ")[0];
+      toolName = bashCommand;
     }
+    policy = getPolicy(config, toolName);
 
     if (policy === "allow") return;
 
-    const choice = await showPermissionDialog(
-      `Permission request (${toolName})`,
-      resource,
-      ctx,
-    );
-    if (policy === "deny") {
-      sendPermissionNotification(toolName, resource, choice, ctx);
-      if (choice === "allow_once") return;
-      if (choice === "allow_always") {
-        await addCwdToConfig(toolName, ctx, pi);  
+    if (policy === "ask") {
+      const choice = await showPermissionDialog(ctx, `Permission request (${toolName})`, fullCommand);
+      if (choice === "allow_once") {
+        sendPermissionNotification(ctx, toolName, fullCommand, choice);
         return;
+      } else if (choice === "allow_always") {
+        sendPermissionNotification(ctx, toolName, fullCommand, choice);
+        await addCwdToConfig(ctx, pi, toolName);
+        return;
+      } else {
+        ctx.abort();
       }
-      ctx.abort();
     }
-    if (choice === "allow_once") {
-      sendPermissionNotification(toolName, resource, choice, ctx);
-      return;
-    } else if (choice === "allow_always") {
-      sendPermissionNotification(toolName, resource, choice, ctx);
-      await addCwdToConfig(toolName, ctx, pi);
-      return;
-    } else {
+
+    if (policy === "deny") {
+      sendPermissionNotification(ctx, toolName, fullCommand, "reject");
       ctx.abort();
     }
   });
@@ -382,7 +236,5 @@ export {
   loadConfig,
   isPathAllowed,
   isPathRestricted,
-  extractPathsFromCommand,
-  getBashAllowed,
-  checkPermission
+  extractPathsFromCommand
 };
