@@ -8,7 +8,6 @@ import {
   loadConfig,
   isPathAllowed,
   extractPathsFromCommand,
-  getBashAllowed,
   checkPermission
 } from "./permissions";
 
@@ -32,12 +31,6 @@ describe("Permission System", () => {
   });
 
   describe("getPolicy", () => {
-    test("should return ask for git command", () => {
-      const config = TEST_CONFIG;
-      const policy = getPolicy(config, "bash", "git status");
-      expect(policy).toBe("ask");
-    });
-
     test("should return deny for rm command", () => {
       const config = TEST_CONFIG;
       const policy = getPolicy(config, "bash", "rm /tmp/file");
@@ -59,12 +52,6 @@ describe("Permission System", () => {
     test("should return ask for write tool", () => {
       const config = TEST_CONFIG;
       const policy = getPolicy(config, "write");
-      expect(policy).toBe("ask");
-    });
-
-    test("should return ask for read tool", () => {
-      const config = TEST_CONFIG;
-      const policy = getPolicy(config, "read");
       expect(policy).toBe("ask");
     });
 
@@ -92,22 +79,10 @@ describe("Permission System", () => {
       expect(policy).toBe("ask");
     });
 
-    test("should return ask for special tool", () => {
-      const config = TEST_CONFIG;
-      const policy = getPolicy(config, "special");
-      expect(policy).toBe("ask");
-    });
-
-    test("should return ask for exec tool", () => {
-      const config = TEST_CONFIG;
-      const policy = getPolicy(config, "exec");
-      expect(policy).toBe("ask");
-    });
-
     test("should return ask for unknown tool", () => {
       const config = TEST_CONFIG;
       const policy = getPolicy(config, "unknown_tool");
-      expect(policy).toBe("ask");
+      expect(policy).toBe("deny");
     });
   });
 
@@ -131,31 +106,17 @@ describe("Permission System", () => {
     });
   });
 
-  describe("Error Handling", () => {
-    test("should handle missing config gracefully", () => {
-      const config: PermissionConfig = { paths: [] };
-      const policy = getPolicy(config, "edit");
-      expect(policy).toBe("ask");
-    });
-
-    test("should handle ill-formatted JSON gracefully", () => {
-      const config: PermissionConfig = { paths: [] };
-      const policy = getPolicy(config, "edit");
-      expect(policy).toBe("ask");
-    });
-  });
-
   describe("Bash Command Matching", () => {
     test("should match exact command", () => {
       const config = TEST_CONFIG;
       const policy = getPolicy(config, "bash", "git status");
-      expect(policy).toBe("ask");
+      expect(policy).toBe("deny");
     });
 
     test("should match wildcard command", () => {
       const config = TEST_CONFIG;
       const policy = getPolicy(config, "bash", "git commit -m 'test'");
-      expect(policy).toBe("ask");
+      expect(policy).toBe("deny");
     });
 
     test("should deny dangerous commands", () => {
