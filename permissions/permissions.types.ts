@@ -1,17 +1,17 @@
-interface PermissionConfig {
+export interface PermissionConfig {
   ask?: string[];
   allow?: string[];
   deny?: string[];
   paths?: string[];
-  error?: string;
+  error?: {};
 }
 
-interface ToolCallEvent {
+export interface ToolCallEvent {
   toolName: string;
   input: { command: string };
 }
 
-interface SendOptions {
+export interface SendOptions {
   triggerTurn: boolean;
   deliverAs: string;
 }

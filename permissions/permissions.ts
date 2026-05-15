@@ -43,10 +43,10 @@ function matchCommand(cmd: string, pattern: string): boolean {
   return false;
 }
 
-function isPathAllowed(path: string, allowed: string[]): boolean {
+function isPathAllowed(path: string, allowed: string[] | undefined): boolean {
   const normalized = path.replace(/\\/g, "/");
   const home = homedir();
-  return allowed.some((allowedPath) => {
+  return (allowed ?? []).some((allowedPath) => {
     const resolved = allowedPath.replace("~", home);
     return normalized === resolved || normalized.startsWith(resolved + "/");
   });
@@ -132,19 +132,26 @@ async function showPermissionDialog(
 
 function sendPermissionNotification(
   toolName: string,
+  resource: string,
   decision: "allow_once" | "allow_always" | "reject",
   ctx: ExtensionContext,
 ): void {
+
   const statusMessage = decision === "reject"
     ? "Rejected"
     : decision === "allow_once"
       ? "Approved (once)"
       : "Approved (always)";
+
+  let toolNotice = "";
   
-  ctx.ui.notify(
-    `${statusMessage} Permission request (${toolName}): ${toolName} tool`,
-    decision === "reject" ? "error" : "success",
-  );
+  if (toolName === "bash") {
+    toolNotice = `${statusMessage} Permission request (${toolName}) tool command: ${resource}`;
+  } else {
+    toolNotice = `${statusMessage} Permission request (${toolName}) tool`;
+  }
+
+  ctx.ui.notify(toolNotice, decision === "reject" ? "error" : "info");
 }
 
 async function addCwdToConfig(
@@ -171,7 +178,7 @@ async function addCwdToConfig(
   
   writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
   
-  ctx.ui.notify(`Added ${cwd} to allowed paths for ${toolName}`, "success");
+  ctx.ui.notify(`Added ${cwd} to allowed paths for ${toolName}`, "info");
 }
 
 async function checkPermission(
@@ -210,7 +217,8 @@ async function checkPermission(
       resource,
       ctx,
     );
-    sendPermissionNotification(toolName, choice, ctx);
+
+    sendPermissionNotification(toolName, resource, choice, ctx);
     
     if (choice === "allow_once") {
       return { block: false };
@@ -229,7 +237,7 @@ async function checkPermission(
     ctx,
   );
   
-  sendPermissionNotification(toolName, choice, ctx);
+  sendPermissionNotification(toolName, resource, choice, ctx);
   
   if (choice === "allow_once") {
     return { block: false };
@@ -265,7 +273,7 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("tool_call" as any, async (event: any, ctx: ExtensionContext) => {
     const cwd = process.cwd();
-    ctx.ui.notify(`Current path: (${cwd})`, "log");
+    ctx.ui.notify(`Current path: (${cwd})`, "info");
 
     const config = loadConfig();
     if (!config) {
@@ -274,7 +282,7 @@ export default function (pi: ExtensionAPI) {
       return;
     }
 
-    if (config.error && config.error.length > 0) {
+    if (config.error) {
       ctx.ui.notify(`Aborting: (${config.error})`, "error");
       ctx.abort();
       return;
@@ -295,12 +303,12 @@ export default function (pi: ExtensionAPI) {
     let resource: string;
     let policy: "allow" | "deny" | "ask" | string;
 
-    ctx.ui.notify(`Tool: ${event.toolName}`, "log");
+    ctx.ui.notify(`Tool: ${event.toolName}`, "info");
     if (event.toolName === "bash") {
       const bashEvent = event as ToolCallEvent;
       toolName = "bash";
       resource = bashEvent.input.command;
-      ctx.ui.notify(`====Bash====: ${resource}`, "log");
+      ctx.ui.notify(`Bash: ${resource}`, "info");
 
       const commandPaths = extractPathsFromCommand(bashEvent.input.command);
       if (config.paths && config.paths.length > 0) {
@@ -348,7 +356,7 @@ export default function (pi: ExtensionAPI) {
       ctx,
     );
     if (policy === "deny") {
-      sendPermissionNotification(toolName, choice, ctx);
+      sendPermissionNotification(toolName, resource, choice, ctx);
       if (choice === "allow_once") return;
       if (choice === "allow_always") {
         await addCwdToConfig(toolName, ctx, pi);  
@@ -357,10 +365,10 @@ export default function (pi: ExtensionAPI) {
       ctx.abort();
     }
     if (choice === "allow_once") {
-      sendPermissionNotification(toolName, choice, ctx);
+      sendPermissionNotification(toolName, resource, choice, ctx);
       return;
     } else if (choice === "allow_always") {
-      sendPermissionNotification(toolName, choice, ctx);
+      sendPermissionNotification(toolName, resource, choice, ctx);
       await addCwdToConfig(toolName, ctx, pi);
       return;
     } else {
