@@ -1,2 +1,2 @@
-  export { Config } from "./config";
-  export { Manager } from "./manager";
+export { Config } from "./config";
+export { Manager } from "./manager";
