@@ -1,34 +1,9 @@
-import { readFileSync, writeFileSync, existsSync } from "fs";
-import { join } from "path";
 import { homedir } from "os";
+import { existsSync } from "fs";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
+import { Config } from "./src/config";
 import { BashCommand, PermissionConfig, ToolCallEvent, SendOptions } from "./src/types";
-
-const CONFIG_PATH = join(homedir(), ".pi", "permissions.json");
-
-function loadConfig(): PermissionConfig {
-   let raw = "";
-   try {
-     raw = readFileSync(CONFIG_PATH, "utf-8");
-     if (!raw.trim()) {
-       return { "error": "file is empty" };
-     }
-     const parsed = JSON.parse(raw);
-     return parsed;
-   } catch (e) {
-     if (e instanceof SyntaxError) {
-       return { "error": `malformed json: ${e.message}` };
-     } else {
-       return { "error": `error reading file: ${e}` };
-     }
-   }
- }
-
-function saveConfig(config: PermissionConfig): void {
-  const numSpaces = 2;
-  writeFileSync(CONFIG_PATH, JSON.stringify(config, null, numSpaces));
-}
 
 function isBashCommand(cmd: string): boolean {
   if (cmd.endsWith(" *")) {
@@ -121,37 +96,12 @@ function sendPermissionNotification(
   ctx.ui.notify(toolNotice, decision === "reject" ? "error" : "info");
 }
 
-async function addCwdToConfig(
-  ctx: ExtensionContext,
-  pi: ExtensionAPI,
-  toolName: string
-): Promise<void> {
-  let config: PermissionConfig;
-  try {
-    const raw = readFileSync(CONFIG_PATH, "utf-8");
-    config = JSON.parse(raw);
-  } catch (e: unknown) {
-    config = { paths: [] };
-  }
-  
-  if (!config.paths) {
-    config.paths = [];
-  }
-  
-  const cwd = process.cwd();
-  if (!config.paths.includes(cwd)) {
-    config.paths.push(cwd);
-  }
-  
-  writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
-  
-  ctx.ui.notify(`Added ${cwd} to allowed paths for ${toolName}`, "info");
-}
-
 export default function (pi: ExtensionAPI) {
+  const config = new Config();
+  
   pi.on("session_start", async (_event, ctx) => {
-    if (!existsSync(CONFIG_PATH)) {
-      ctx.ui.notify(`Unable to find ${CONFIG_PATH}. Please create ${CONFIG_PATH}`, "warning");
+    if (!existsSync(Config.FILE_PATH)) {
+      ctx.ui.notify(`Unable to find ${Config.FILE_PATH}. Please create ${Config.FILE_PATH}`, "warning");
     } else {
       ctx.ui.notify("Permissions extension loaded!\n", "info");
     }
@@ -161,19 +111,19 @@ export default function (pi: ExtensionAPI) {
     const cwd = process.cwd();
     ctx.ui.notify(`Current path: (${cwd})`, "info");
 
-    const config = loadConfig();
-    if (!config) {
+    const policies = config.load();
+    if (!policies) {
       ctx.ui.notify(`Config not loaded`, "error");
       ctx.abort();
       return;
     }
 
-    if (config.error) {
-      ctx.ui.notify(`Aborting: (${config.error})`, "error");
+    if (policies.error) {
+      ctx.ui.notify(`Aborting: (${policies.error})`, "error");
       ctx.abort();
       return;
-    } else if (config.paths && config.paths.length > 0) {
-      if (!isPathAllowed(cwd, config.paths)) {
+    } else if (policies.paths && policies.paths.length > 0) {
+      if (!isPathAllowed(cwd, policies.paths)) {
         ctx.ui.notify(`Aborting: Current directory (${cwd}) not in allowed paths`, "error");
         ctx.abort();
         return;
@@ -184,8 +134,8 @@ export default function (pi: ExtensionAPI) {
       return;
     }
 
-    if (config.paths && config.paths.length > 0) {
-      if (!isPathAllowed(cwd, config.paths)) {
+    if (policies.paths && policies.paths.length > 0) {
+      if (!isPathAllowed(cwd, policies.paths)) {
         ctx.ui.notify(`Aborting: Current directory (${cwd}) not in allowed paths`, "error");
         ctx.abort();
         return true;
@@ -207,7 +157,7 @@ export default function (pi: ExtensionAPI) {
       fullCommand = bashCmd.args;
       toolName = bashCmd.command;
     }
-    policy = getPolicy(config, toolName);
+    policy = getPolicy(policies, toolName);
 
     if (policy === "allow") return;
 
@@ -218,7 +168,7 @@ export default function (pi: ExtensionAPI) {
         return;
       } else if (choice === "allow_always") {
         sendPermissionNotification(ctx, toolName, fullCommand, choice);
-        await addCwdToConfig(ctx, pi, toolName);
+        await config.addPath(ctx, pi, toolName);
         return;
       } else {
         ctx.abort();
@@ -235,7 +185,6 @@ export default function (pi: ExtensionAPI) {
 export {
   extractBashCommand,
   getPolicy,
-  loadConfig,
   isPathAllowed,
   extractPathsFromCommand
 };
