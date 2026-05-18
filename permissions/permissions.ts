@@ -3,7 +3,7 @@ import { join } from "path";
 import { homedir } from "os";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
-import { BashCommand, PermissionConfig, ToolCallEvent, SendOptions } from "./permissions.types";
+import { BashCommand, PermissionConfig, ToolCallEvent, SendOptions } from "./src/types";
 
 const CONFIG_PATH = join(homedir(), ".pi", "permissions.json");
 
