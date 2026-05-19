@@ -1,19 +1,19 @@
 # About
 
 ```
-pi agent ──tool call──► plugin intercept
-                        │
-                        ▼
-                    load ~/.pi/permissions.json
-                        │
-                        ▼
-                    check cwd in allowed paths
-                        │
-                        ▼
-                    determine policy (deny > ask > allow)
-                        │
-                        ▼
-                    execute or prompt user
+pi agent --> tool call --> plugin intercept
+                          |
+                          v
+                      load ~/.pi/permissions.json
+                          |
+                          v
+                      check cwd in allowed paths
+                          |
+                          v
+                      determine policy (deny > ask > allow)
+                          |
+                          v
+                      execute, prompt user, or abort
 ```
 
 Deterministic permission gates for [built-in tools](https://pi.dev/docs/latest/extensions#overriding-built-in-tools), bash commands, and other operations used in [pi coding agent](https://pi.dev/) by [Mario Zechner](https://mariozechner.at/).
