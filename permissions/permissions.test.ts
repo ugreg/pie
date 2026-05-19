@@ -1,4 +1,4 @@
-import { test, expect, describe } from "bun:test";
+import { test, expect, describe, beforeEach } from "bun:test";
 
 import { PermissionConfig } from "./types";
 import { Config, Manager } from "./src";
@@ -49,8 +49,11 @@ const TEST_CONFIG: PermissionConfig = {
 };
 
 describe("Los lees de archivos", () => {
+  let configFile;
+  beforeEach(() => {
+    configFile = config.load();
+  });
   describe("File io", () => {
-    const configFile = config.load();
     test("access permissions file in expected path", () => {
       expect(configFile).not.toBeNull();
       expect(configFile).not.toHaveProperty('error');
@@ -83,10 +86,30 @@ describe("Los lees de archivos", () => {
       const isAllowed = config.pathAllowed("/Users/sensative/path", TEST_CONFIG.paths);
       expect(isAllowed).toBe(false);
     });
+
+    test("allow path with multiple trailing slashes", () => {
+      const isAllowed = config.pathAllowed("/Users/me/.pi/agent/extensions//", TEST_CONFIG.paths);
+      expect(isAllowed).toBe(true);
+    });
+
+    test("allow path with trailing slash and extra spaces", () => {
+      const isAllowed = config.pathAllowed("/Users/me/.pi/agent/extensions/  ", TEST_CONFIG.paths);
+      expect(isAllowed).toBe(true);
+    });
+
+    test("allow child path with mixed trailing slashes", () => {
+      const isAllowed = config.pathAllowed("/Users/me/.pi/agent/extensions//permissions/", TEST_CONFIG.paths);
+      expect(isAllowed).toBe(true);
+    });
+
+    test("block unlisted path with trailing slashes", () => {
+      const isAllowed = config.pathAllowed("/Users/sensative/path//", TEST_CONFIG.paths);
+      expect(isAllowed).toBe(false);
+    });
   });
 });
 
-describe("Los pedidos de permisios", () => {
+describe("Los pedidos de permisos", () => {
   describe("Built-in y extensions", () => {
     test("allow for find tool", () => {
       const policy: string = manager.getPolicy(TEST_CONFIG, "find");
@@ -205,23 +228,32 @@ describe("Los pedidos de permisios", () => {
       expect(policy).toBe("deny");
     });
 
-    test("duplicate 'read' in ask and allow, allow wins", () => {
+    test("duplicate 'read' in ask and allow, ask wins", () => {
       const policy: string = manager.getPolicy(TEST_CONFIG, "read");
       expect(policy).toBe("ask");
     });
   });
 
   describe("Error Handling", () => {
-    test("handle missing config gracefully", () => {
+    test("handle unknown tool gracefully", () => {
       const policy: string = manager.getPolicy(TEST_CONFIG, "nuevo");
       expect(policy).toBe("deny");
     });
-    let c: PermissionConfig = {
-      paths: [
-        "/Users/me",
-      ]
-    };
     test("handle ill-formatted JSON gracefully", () => {
+      let c: PermissionConfig = {
+        paths: [
+          "/Users/me"
+        ],
+        ask: [
+          "edit"
+        ],
+        allow: [
+          "find"
+        ],
+        deny: [
+          "rm"
+        ]
+      };
       const policy: string = manager.getPolicy(c, "read");
       expect(policy).toBe("deny");
     });
