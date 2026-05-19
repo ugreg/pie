@@ -6,14 +6,6 @@ import { PermissionConfig, BashCommand } from "./types";
 
 export class Manager {
 
-  extractBashCommand(event: any): BashCommand {
-    let bc: BashCommand = { command: "", args: "" };
-    bc.command = event.input.command;
-    bc.args = event.input.command.split(" ")[0];
-  
-    return bc;
-  }
-  
   isPathAllowed(path: string, allowed: string[] | undefined): boolean {
     const normalized = path.replace(/\\/g, "/");
     const home = homedir();

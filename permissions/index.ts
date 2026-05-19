@@ -4,10 +4,9 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 
 import { Config, Manager } from "./src";
 
-import { 
-  BashCommand, 
-  PermissionConfig, 
-  ToolCallEvent, 
+import {
+  PermissionConfig,
+  ToolCallEvent,
   SendOptions } from "./src/types";
 
 export default function (pi: ExtensionAPI) {
@@ -59,7 +58,6 @@ export default function (pi: ExtensionAPI) {
 
     let toolName: string;
     let fullCommand: string;
-    let bashCmd: BashCommand;
     let policy: "allow" | "deny" | "ask" | string;
 
     ctx.ui.notify(`Tool: ${event.toolName}`, "info");
@@ -67,15 +65,11 @@ export default function (pi: ExtensionAPI) {
     await manager.debug("before check bash", ctx, policies);
 
     toolName = event.toolName;
-    fullCommand = "";
-    bashCmd = { command: "", args: "" };
-
-    await manager.debug(`checked bash on command '${event.input.command}'`, ctx, policies);
+    fullCommand = "undefined";
 
     if (event.toolName === "bash" && event.input.command) {
-      bashCmd = manager.extractBashCommand(event);
-      fullCommand = bashCmd.args;
-      toolName = bashCmd.command;
+      fullCommand = event.input.command;
+      toolName = event.input.command.split(" ")[0];;
     }
 
     await manager.debug(`tool '${toolName}'`, ctx, policies);

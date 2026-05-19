@@ -15,8 +15,3 @@ export interface SendOptions {
   triggerTurn: boolean;
   deliverAs: string;
 }
-
-export interface BashCommand {
-  command: string;
-  args: string;
-}
