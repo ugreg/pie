@@ -1,30 +1,9 @@
-import { homedir } from "os";
-import { existsSync } from "fs";
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 
-import { PermissionConfig, BashCommand } from "./types";
+import { PermissionConfig } from "./types";
 
 export class Manager {
 
-  isPathAllowed(path: string, allowed: string[] | undefined): boolean {
-    const normalized = path.replace(/\\/g, "/");
-    const home = homedir();
-    return (allowed ?? []).some((allowedPath) => {
-      const resolved = allowedPath.replace("~", home);
-      return normalized === resolved || normalized.startsWith(resolved + "/");
-    });
-  }
-  
-  extractPathsFromCommand(cmd: string): string[] {
-    const paths: string[] = [];
-    const regex = /["']([^"']+)["']|(?:\/[^\s]+)+/g;
-    let match;
-    while ((match = regex.exec(cmd)) !== null) {
-      paths.push(match[1] || match[0]);
-    }
-    return paths;
-  }
-  
   getPolicy(config: PermissionConfig, toolName: string): "allow" | "deny" | "ask" {
     if (config.allow?.includes(toolName)) {
       return "allow";

@@ -33,7 +33,7 @@ export class Config {
      }
    }
 
-  async verify(ctx: ExtensionContext, policies: PermissionConfig): void {
+  verify(ctx: ExtensionContext, policies: PermissionConfig, cwd: string): void {
     if (!policies) {
       ctx.ui.notify(`Config not loaded`, "error");
       ctx.abort();
@@ -44,7 +44,7 @@ export class Config {
       ctx.abort();
       return;
     } else if (policies.paths && policies.paths.length > 0) {
-      if (!manager.isPathAllowed(cwd, policies.paths)) {
+      if (!this.isPathAllowed(cwd, policies.paths)) {
         ctx.ui.notify(`Aborting: Current directory (${cwd}) not in allowed paths`, "error");
         ctx.abort();
         return;
@@ -81,5 +81,14 @@ export class Config {
     writeFileSync(Config.FILE_PATH, JSON.stringify(config, null, 2));
     
     ctx.ui.notify(`Added ${cwd} to allowed paths for ${toolName}`, "info");
+  }
+
+  isPathAllowed(path: string, allowed: string[] | undefined): boolean {
+    const normalized = path.replace(/\\/g, "/");
+    const home = homedir();
+    return (allowed ?? []).some((allowedPath) => {
+      const resolved = allowedPath.replace("~", home);
+      return normalized === resolved || normalized.startsWith(resolved + "/");
+    });
   }
 }
