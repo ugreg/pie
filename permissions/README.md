@@ -32,4 +32,4 @@ Create a config file ` ~/.pi/permissions.json` using the structure from `permiss
 
 Pi packages can execute code and influence agent behavior. Review the source before installing third-party packages.
 
-[Inspired by pi-permission-system](https://github.com/MasuRii/pi-permission-system) here is the [extension page](https://pi.dev/packages/@gotgenes/pi-permission-system?name=permission) for that,
+[Inspired by pi-permission-system](https://github.com/MasuRii/pi-permission-system), here is it's [extension page](https://pi.dev/packages/@gotgenes/pi-permission-system?name=permission).
