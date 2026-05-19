@@ -43,7 +43,8 @@ const TEST_CONFIG: PermissionConfig = {
     "find",
     "get_search_content",
     "grep",
-    "ls"
+    "ls",
+    "read"
   ]
 };
 
@@ -53,6 +54,14 @@ describe("Los lees de archivos", () => {
       const configFile = config.load();
       expect(configFile).not.toBeNull();
       expect(configFile).not.toHaveProperty('error');
+    });
+
+    test("config has expected properties", () => {
+      const configFile = config.load();
+      expect(configFile).toHaveProperty('paths');
+      expect(configFile).toHaveProperty('ask');
+      expect(configFile).toHaveProperty('allow');
+      expect(configFile).toHaveProperty('deny');
     });
   });
 
@@ -74,7 +83,7 @@ describe("Los lees de archivos", () => {
   });
 });
 
-describe("Los pedidoe de permisios", () => {
+describe("Los pedidos de permisios", () => {
   describe("Built-in y extensions", () => {
     test("allow for find tool", () => {
       const policy: string = manager.getPolicy(TEST_CONFIG, "find");
@@ -188,20 +197,20 @@ describe("Los pedidoe de permisios", () => {
       expect(policy).toBe("deny");
     });
 
-    test("duplicate git in deny list takes precedence", () => {
-      const policy: string = manager.getPolicy(TEST_CONFIG, "git status");
+    test("duplicate 'git' in deny and ask, deny wins", () => {
+      const policy: string = manager.getPolicy(TEST_CONFIG, "git commit -m 'Codigo codigo codigo'");
       expect(policy).toBe("deny");
     });
 
-    test("duplicate git in deny list takes precedence", () => {
-      const policy: string = manager.getPolicy(TEST_CONFIG, "git commit -m 'test'");
-      expect(policy).toBe("deny");
+    test("duplicate 'read' in ask and allow, allow wins", () => {
+      const policy: string = manager.getPolicy(TEST_CONFIG, "read");
+      expect(policy).toBe("ask");
     });
   });
 
   describe("Error Handling", () => {
     test("handle missing config gracefully", () => {
-      const policy: string = manager.getPolicy(TEST_CONFIG, "");
+      const policy: string = manager.getPolicy(TEST_CONFIG, "nuevo");
       expect(policy).toBe("deny");
     });
     let c: PermissionConfig = {
