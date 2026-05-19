@@ -28,7 +28,7 @@ By default, [pi runs in full YOLO mode](https://mariozechner.at/posts/2025-11-30
 pi install npm:@ugreg/pi-agent-permission-system-lite
 ```
 
-Create a config file ` ~/.pi/permissions.json` using the structure from `permissions.example.json`.
+Create a config file ` ~/.pi/permissions.json` using the structure from `permissions.example.json`. Updates to the config are pulled in automtically into your current and future sessions.
 
 > [!CAUTION]
 > Pi packages can execute code and influence agent behavior. 
