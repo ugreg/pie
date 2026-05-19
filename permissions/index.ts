@@ -12,8 +12,6 @@ import {
 
 export default function (pi: ExtensionAPI) {
   const config = new Config();
-  const manager = new Manager();
-  
   pi.on("session_start", async (_event, ctx) => {
     if (!existsSync(Config.FILE_PATH)) {
       ctx.ui.notify(`Unable to find ${Config.FILE_PATH}. Please create ${Config.FILE_PATH}`, "warning");
@@ -22,6 +20,7 @@ export default function (pi: ExtensionAPI) {
     }
   });
 
+  const manager = new Manager();
   pi.on("tool_call" as any, async (event: any, ctx: ExtensionContext) => {
     const cwd = process.cwd();
     ctx.ui.notify(`Current path: (${cwd})`, "info");
