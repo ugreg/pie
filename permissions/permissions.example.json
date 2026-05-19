@@ -1,31 +1,37 @@
 {
-  "ask": {
-    "tools": [
-      "edit",
-      "write"
-    ],
-  },
-  "allow": {
-    "tools": [
-      "find",
-      "grep",
-      "ls",
-      "read",
-      "code_search",
-      "fetch_content",
-      "get_search_content",
-      "web_search"
-    ],
-  },
-  "deny": {
-    "bash git *",
-    "bash npm *",
-    "bash rm *",
-    "bash dd *",
-    "bash kill *",
-    "bash killall *",
-    "bash nc *",
-    "bash mv *"
-  },
-  "paths": []
+  "ask": [
+    "edit",
+    "write"
+  ],
+  "allow": [
+    "code_search",
+    "fetch_content",
+    "find",
+    "get_search_content",
+    "grep",
+    "ls",
+    "read",
+    "web_search"
+  ],
+  "deny": [
+    ":(){ :|:& };:",
+    ">",
+    "brew",
+    "chown",
+    "dd",
+    "git",
+    "kill",
+    "killall",
+    "mkfs",
+    "mv",
+    "nc",
+    "npm",
+    "pnpm",
+    "rm",
+    "shred",
+    "wget"
+  ],
+  "paths": [
+    "/Users/.pi"
+  ]
 }
