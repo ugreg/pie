@@ -15,6 +15,19 @@
       "index.ts"
     ]
   },
+  "keywords": [
+    "access-control",
+    "authorization",
+    "ai",
+    "coding-agent",
+    "pi",
+    "pi-extension",
+    "pi-coding-agent",
+    "pi-package",
+    "permissions",
+    "policy",
+    "security"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "bun test",
