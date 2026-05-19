@@ -1,17 +1,50 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 
-import { PermissionConfig, PermissionChoice, Policy } from "./types";
+import {
+  PermissionConfig,
+  PermissionChoice,
+  Policy,
+  ToolCall 
+} from "./types";
 
 export class Manager {
 
-  getPolicy(config: PermissionConfig, toolName: string): Policy {
-    if (config.deny?.includes(toolName)) {
+  async process(ctx: ExtensionContext, permissions: PermissionConfig, toolCall: ToolCall): Promise<void> {
+    let policy: Policy;
+    let choice: PermissionChoice;
+    policy = this.getPolicy(permissions, toolCall.name);
+    switch (policy) {
+      case "allow":
+        return;
+      case "ask": {
+        choice = await this.showPermissionDialog(
+          ctx,
+          `Permission request (${toolCall.name})`,
+          toolCall.command
+        );
+        if (choice === "allow") {
+          this.sendPermissionNotification(ctx, toolCall.name, toolCall.command, choice);
+          return;
+        } else {
+          ctx.abort();
+          return;
+        }
+      }
+      case "deny":
+        this.sendPermissionNotification(ctx, toolCall.name, toolCall.command, "reject");
+        ctx.abort();
+        return;
+    }
+  }
+  
+  getPolicy(permissions: PermissionConfig, toolName: string): Policy {
+    if (permissions.deny?.includes(toolName)) {
       return "deny";
     }
-    else if (config.ask?.includes(toolName)) {
+    else if (permissions.ask?.includes(toolName)) {
       return "ask";
     }
-    else if (config.allow?.includes(toolName)) {
+    else if (permissions.allow?.includes(toolName)) {
       return "allow";
     } 
     else {
