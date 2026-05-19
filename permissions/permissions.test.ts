@@ -50,14 +50,12 @@ const TEST_CONFIG: PermissionConfig = {
 
 describe("Los lees de archivos", () => {
   describe("File io", () => {
+    const configFile = config.load();
     test("access permissions file in expected path", () => {
-      const configFile = config.load();
       expect(configFile).not.toBeNull();
       expect(configFile).not.toHaveProperty('error');
     });
-
     test("config has expected properties", () => {
-      const configFile = config.load();
       expect(configFile).toHaveProperty('paths');
       expect(configFile).toHaveProperty('ask');
       expect(configFile).toHaveProperty('allow');
@@ -68,6 +66,11 @@ describe("Los lees de archivos", () => {
   describe("Path Allowed Checking", () => {
     test("allow allowed path", () => {
       const isAllowed = config.pathAllowed("/Users/me/.pi/agent/extensions", TEST_CONFIG.paths);
+      expect(isAllowed).toBe(true);
+    });
+    
+    test("allow allowed path with trailing /", () => {
+      const isAllowed = config.pathAllowed("/Users/me/.pi/agent/extensions/", TEST_CONFIG.paths);
       expect(isAllowed).toBe(true);
     });
 
