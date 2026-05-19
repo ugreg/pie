@@ -72,6 +72,7 @@ export class Manager {
     }
     return "allow_once";
   }
+
   sendPermissionNotification(
     ctx: ExtensionContext,
     toolName: string,
@@ -94,5 +95,16 @@ export class Manager {
     }
   
     ctx.ui.notify(toolNotice, decision === "reject" ? "error" : "info");
+  }
+
+  async debug(
+    step: string,
+    ctx: ExtensionContext,
+    policies: PermissionConfig
+  ): Promise<void> {
+    const msg: string = `LOG step: ${step}\nLOG ask: ${policies.ask}\nLOG allow: ${policies.allow}\nLOG deny: ${policies.deny}\nLOG path: ${policies.paths}`
+    ctx.ui.notify(msg, "info");
+    const options = ["Allow once", "Allow always", "Reject"];
+    const choice = await ctx.ui.select(`! esc to continue`, []);
   }
 }

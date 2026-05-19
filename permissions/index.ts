@@ -26,6 +26,7 @@ export default function (pi: ExtensionAPI) {
     ctx.ui.notify(`Current path: (${cwd})`, "info");
 
     const policies = config.load();
+
     if (!policies) {
       ctx.ui.notify(`Config not loaded`, "error");
       ctx.abort();
@@ -62,15 +63,21 @@ export default function (pi: ExtensionAPI) {
     let policy: "allow" | "deny" | "ask" | string;
 
     ctx.ui.notify(`Tool: ${event.toolName}`, "info");
-    
+
+    await manager.debug("before check bash", ctx, policies);
+
     toolName = event.toolName;
     fullCommand = "";
     bashCmd = { command: "", args: "" };
+
+    await manager.debug(`checked bash on command '${event.input.command}'`, ctx, policies);
+
     if (event.toolName === "bash" && event.input.command && manager.isBashCommand(event.input.command)) {
       bashCmd = manager.extractBashCommand(event);
       fullCommand = bashCmd.args;
       toolName = bashCmd.command;
     }
+
     policy = manager.getPolicy(policies, toolName);
 
     if (policy === "allow") return;
