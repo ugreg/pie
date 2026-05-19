@@ -1,7 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { CustomEditor } from "@earendil-works/pi-coding-agent";
 
-const haunter = [
+const _haunter = [
 "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣴⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
 "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢰⣿⣷⡀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
 "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣾⣿⣿⣷⣀⣀⣀⣀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⡤",
@@ -18,7 +17,7 @@ const haunter = [
 "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠁⠀⠀⡟⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
 ];
 
-const lugia = [
+const _lugia = [
 "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢻⣦⣄⠀⠀⡄⠀⠀⠀⠀⠀⠀⠀⠀⠀",
 "⠀⠀⠀⠀⠀⠀⠀⠀⠀⢤⠄⣸⣿⣿⣷⡔⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
 "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢣⡀⠈⠻⢿⣿⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀",
@@ -36,7 +35,7 @@ const lugia = [
 "⠀⠀⠈⠁⠈⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀"
 ]
 
-const mew = [
+const _mew = [
 "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡴⠞⢳⠀⠀⠀⠀⠀",
 "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡔⠋⠀⢰⠎⠀⠀⠀⠀⠀",
 "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⢆⣤⡞⠃⠀⠀⠀⠀⠀⠀",
@@ -53,7 +52,7 @@ const mew = [
 "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠈⠙⠫⠿⠿⠿⠛⠋⠁⠀⠀⠀⠀"
 ]
 
-const porygon = [
+const _porygon = [
 "⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
 "⠀⠀⠀⠀⠀⠀⣠⠤⠛⠋⠉⠉⠉⠛⢦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀",
 "⠀⠀⠀⠀⣠⠶⠓⠂⠀⠀⠠⠤⠤⠀⠀⠙⣆⠀⠀⠀⠀⠀⠀⡠⢤⠀",
@@ -72,9 +71,9 @@ const porygon = [
 
 export default function (pi: ExtensionAPI) {
   return pi.on("session_start", async (_event, ctx) => {
-
-    ctx.ui.setHeader((_tui, theme) => ({
-      render: () => lugia,
+    const mon = _lugia;
+    ctx.ui.setHeader(() => ({
+      render: () => mon,
       invalidate() {}
     }));
   });
