@@ -29,19 +29,16 @@ describe("Los lees de archivos", () => {
 
   describe("Path Allowed Checking", () => {
     test("should detect allowed path", () => {
-      const configFile = TEST_CONFIG;
       const isAllowed = manager.isPathAllowed("/Users/_/pie", configFile.paths);
       expect(isAllowed).toBe(true);
     });
 
     test("should detect allowed child path", () => {
-      const configFile = TEST_CONFIG;
       const isAllowed = manager.isPathAllowed("/Users/_/pie/permissions", configFile.paths);
       expect(isAllowed).toBe(true);
     });
 
     test("should detect non-allowed path", () => {
-      const configFile = TEST_CONFIG;
       const isAllowed = manager.isPathAllowed("/Users/other/path", configFile.paths);
       expect(isAllowed).toBe(false);
     });
@@ -67,56 +64,47 @@ describe("Los pedidoe de permisios", () => {
    */
   describe("manager.getPolicy", () => {
     test("should return deny for rm command", () => {
-      const configFile = TEST_CONFIG;
-      const policy: string = manager.getPolicy(config, "bash", "rm -rf *.*");
+      const policy: string = manager.getPolicy(TEST_CONFIG, "bash", "rm -rf *.*");
       expect(policy).toBe("deny");
     });
 
     test("should return allow for find tool", () => {
-      const configFile = TEST_CONFIG;
-      const policy: string = manager.getPolicy(config, "find");
+      const policy: string = manager.getPolicy(TEST_CONFIG, "find");
       expect(policy).toBe("allow");
     });
 
     test("should return ask for edit tool", () => {
-      const configFile = TEST_CONFIG;
-      const policy: string = manager.getPolicy(config, "edit");
+      const policy: string = manager.getPolicy(TEST_CONFIG, "edit");
       expect(policy).toBe("ask");
     });
 
     test("should return ask for write tool", () => {
-      const configFile = TEST_CONFIG;
-      const policy: string = manager.getPolicy(config, "write");
+      const policy: string = manager.getPolicy(TEST_CONFIG, "write");
       expect(policy).toBe("ask");
     });
 
     test("should return ask for web_search tool", () => {
-      const configFile = TEST_CONFIG;
-      const policy: string = manager.getPolicy(config, "web_search");
+      const policy: string = manager.getPolicy(TEST_CONFIG, "web_search");
       expect(policy).toBe("ask");
     });
 
     test("should return allow for code_search tool", () => {
-      const configFile = TEST_CONFIG;
-      const policy: string = manager.getPolicy(config, "code_search");
+      const policy: string = manager.getPolicy(TEST_CONFIG, "code_search");
       expect(policy).toBe("allow");
     });
 
     test("should return ask for mcp tool", () => {
-      const configFile = TEST_CONFIG;
-      const policy: string = manager.getPolicy(config, "mcp");
+      const policy: string = manager.getPolicy(TEST_CONFIG, "mcp");
       expect(policy).toBe("ask");
     });
 
     test("should return ask for skills tool", () => {
-      const configFile = TEST_CONFIG;
-      const policy: string = manager.getPolicy(config, "skills");
+      const policy: string = manager.getPolicy(TEST_CONFIG, "skills");
       expect(policy).toBe("ask");
     });
 
     test("should return ask for unknown tool", () => {
-      const configFile = TEST_CONFIG;
-      const policy: string = manager.getPolicy(config, "unknown_tool");
+      const policy: string = manager.getPolicy(TEST_CONFIG, "unknown_tool");
       expect(policy).toBe("deny");
     });
   });
@@ -124,13 +112,13 @@ describe("Los pedidoe de permisios", () => {
   describe("Error Handling", () => {
     test("should handle missing config gracefully", () => {
       const config: PermissionConfig = { paths: [] };
-      const policy: string = manager.getPolicy(config, "edit");
+      const policy: string = manager.getPolicy(TEST_CONFIG, "edit");
       expect(policy).toBe("ask");
     });
 
     test("should handle ill-formatted JSON gracefully", () => {
       const config: PermissionConfig = { paths: [] };
-      const policy: string = manager.getPolicy(config, "edit");
+      const policy: string = manager.getPolicy(TEST_CONFIG, "edit");
       expect(policy).toBe("ask");
     });
   });
@@ -139,26 +127,22 @@ describe("Los pedidoe de permisios", () => {
 describe("Permission System", () => {
   describe("Bash Command Matching", () => {
     test("should match exact command", () => {
-      const configFile = TEST_CONFIG;
-      const policy: string = manager.getPolicy(config, "bash", "git status");
+      const policy: string = manager.getPolicy(TEST_CONFIG, "bash", "git status");
       expect(policy).toBe("ask");
     });
 
     test("should match wildcard command", () => {
-      const configFile = TEST_CONFIG;
-      const policy: string = manager.getPolicy(config, "bash", "git commit -m 'test'");
+      const policy: string = manager.getPolicy(TEST_CONFIG, "bash", "git commit -m 'test'");
       expect(policy).toBe("ask");
     });
 
     test("should deny dangerous commands", () => {
-      const configFile = TEST_CONFIG;
-      const policy: string = manager.getPolicy(config, "bash", "rm -rf /");
+      const policy: string = manager.getPolicy(TEST_CONFIG, "bash", "rm -rf /");
       expect(policy).toBe("deny");
     });
 
     test("should deny kill commands", () => {
-      const configFile = TEST_CONFIG;
-      const policy: string = manager.getPolicy(config, "bash", "kill -9 1234");
+      const policy: string = manager.getPolicy(TEST_CONFIG, "bash", "kill -9 1234");
       expect(policy).toBe("deny");
     });
   });
