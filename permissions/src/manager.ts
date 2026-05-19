@@ -60,7 +60,5 @@ export class Manager {
   ): Promise<void> {
     const msg: string = `LOG step: ${step}\nLOG ask: ${policies.ask}\nLOG allow: ${policies.allow}\nLOG deny: ${policies.deny}\nLOG path: ${policies.paths}`
     ctx.ui.notify(msg, "info");
-    const options = ["Allow", "Reject"];
-    const choice = await ctx.ui.select(`! esc to continue`, []);
   }
 }

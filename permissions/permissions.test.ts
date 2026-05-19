@@ -1,13 +1,11 @@
 import { test, expect, describe } from "bun:test";
-import { readFileSync } from "fs";
-import { join } from "path";
-import { homedir } from "os";
 
-import { PermissionConfig, PermissionChoice, Policy } from "./types";
+import { PermissionConfig } from "./types";
 import { Config, Manager } from "./src";
 
 const config = new Config();
 const manager = new Manager();
+
 const TEST_CONFIG: PermissionConfig = {
   ask: [
     "edit",
@@ -25,8 +23,7 @@ const TEST_CONFIG: PermissionConfig = {
     "find",
     "get_search_content",
     "grep",
-    "ls",
-    "rm"
+    "ls"
   ],
   deny: [
     ":(){ :|:& };:",
@@ -41,10 +38,11 @@ const TEST_CONFIG: PermissionConfig = {
     "npm",
     "mkfs",
     "mv",
+    "rm",
     "shred",
     "wget"
   ],
-  paths: ["/Users/yo/.pi/agent/extensions", "/Users/yo/.pi/agent/extensions/permissions"]
+  paths: ["/Users/me/.pi/agent/extensions"]
 };
 
 describe("Los lees de archivos", () => {
@@ -58,17 +56,17 @@ describe("Los lees de archivos", () => {
 
   describe("Path Allowed Checking", () => {
     test("should detect allowed path", () => {
-      const isAllowed = manager.isPathAllowed("/Users/yo/.pi/agent/extensions", TEST_CONFIG.paths);
+      const isAllowed = config.isPathAllowed("/Users/me/.pi/agent/extensions", TEST_CONFIG.paths);
       expect(isAllowed).toBe(true);
     });
 
     test("should detect allowed child path", () => {
-      const isAllowed = manager.isPathAllowed("/Users/yo/.pi/agent/extensions/permissions", TEST_CONFIG.paths);
+      const isAllowed = config.isPathAllowed("/Users/me/.pi/agent/extensions/permissions", TEST_CONFIG.paths);
       expect(isAllowed).toBe(true);
     });
 
     test("should detect non-allowed path", () => {
-      const isAllowed = manager.isPathAllowed("/Users/other/path", TEST_CONFIG.paths);
+      const isAllowed = config.isPathAllowed("/Users/sensative/path", TEST_CONFIG.paths);
       expect(isAllowed).toBe(false);
     });
   });
@@ -173,7 +171,7 @@ describe("Los pedidoe de permisios", () => {
       expect(policy).toBe("deny");
     });
     
-    test("should deny mv command", () => {
+    test("should deny rm command", () => {
       const policy: string = manager.getPolicy(TEST_CONFIG, "rm -rf *.*");
       expect(policy).toBe("deny");
     });
@@ -191,13 +189,11 @@ describe("Los pedidoe de permisios", () => {
 
   describe("Error Handling", () => {
     test("should handle missing config gracefully", () => {
-      const config: PermissionConfig = { paths: [] };
       const policy: string = manager.getPolicy(TEST_CONFIG, "edit");
       expect(policy).toBe("ask");
     });
 
     test("should handle ill-formatted JSON gracefully", () => {
-      const config: PermissionConfig = { paths: [] };
       const policy: string = manager.getPolicy(TEST_CONFIG, "edit");
       expect(policy).toBe("ask");
     });

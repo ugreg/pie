@@ -1,12 +1,9 @@
-import { homedir } from "os";
 import { existsSync } from "fs";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 import { Config, Manager } from "./src";
 
 import {
-  PermissionConfig,
-  SendOptions,
   PermissionChoice,
   Policy } from "./src/types";
 
