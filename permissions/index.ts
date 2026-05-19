@@ -4,8 +4,8 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 import { Config, Manager } from "./src";
 
 import {
-  PermissionChoice,
-  Policy } from "./src/types";
+  ToolCall
+} from "./src/types";
 
 export default function (pi: ExtensionAPI) {
   const config = new Config();
@@ -21,43 +21,15 @@ export default function (pi: ExtensionAPI) {
   pi.on("tool_call" as any, async (event: any, ctx: ExtensionContext) => {
     const cwd = process.cwd();
     ctx.ui.notify(`Current path: (${cwd})`, "info");
-    const policies = config.load();
-    config.verify(ctx, policies, cwd);
-    let toolName: string;
-    let fullCommand: string;
-    let policy: Policy;
-    let choice: PermissionChoice;
+    const permissions = config.load();
+    config.verify(ctx, permissions, cwd);
+    let toolCall: ToolCall = { name: "", command: "" };
     ctx.ui.notify(`Tool: ${event.toolName}`, "info");
-    // await manager.debug("before check bash", ctx, policies);
-    toolName = event.toolName;
-    fullCommand = "undefined";
+    toolCall.name = event.toolName;
     if (event.toolName === "bash" && event.input.command) {
-      fullCommand = event.input.command;
-      toolName = event.input.command.split(" ")[0];;
+      toolCall.name = event.input.command.split(" ")[0];
+      toolCall.command = event.input.command;
     }
-    // await manager.debug(`tool '${toolName}'`, ctx, policies);
-    policy = manager.getPolicy(policies, toolName);
-    switch (policy) {
-      case "allow":
-        return;
-      case "ask": {
-        choice = await manager.showPermissionDialog(
-          ctx,
-          `Permission request (${toolName})`,
-          fullCommand
-        );
-        if (choice === "allow") {
-          manager.sendPermissionNotification(ctx, toolName, fullCommand, choice);
-          return;
-        } else {
-          ctx.abort();
-          return;
-        }
-      }
-      case "deny":
-        manager.sendPermissionNotification(ctx, toolName, fullCommand, "reject");
-        ctx.abort();
-        return;
-    }
+    await manager.process(ctx, permissions, toolCall);
   });
 }
