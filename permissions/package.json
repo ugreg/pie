@@ -8,6 +8,12 @@
     "url": "https://github.com/ugreg/pie.git"
   },
   "license": "MIT",
+  "files": [
+    "index.ts",
+    "src/",
+    "permissions.example.json",
+    "README.md"
+  ],
   "devDependencies": {
     "typescript": "^6.0.3"
   },
