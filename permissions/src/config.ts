@@ -9,7 +9,6 @@ export class Config {
 
   static readonly FILE_PATH = join(homedir(), ".pi", "permissions.json");
 
-  // dup async function addCwdToConfig(
   save(config: PermissionConfig): void {
     const numSpaces = 2;
     writeFileSync(Config.FILE_PATH, JSON.stringify(config, null, numSpaces));
@@ -44,7 +43,7 @@ export class Config {
       ctx.abort();
       return;
     } else if (policies.paths && policies.paths.length > 0) {
-      if (!this.isPathAllowed(cwd, policies.paths)) {
+      if (!this.pathAllowed(cwd, policies.paths)) {
         ctx.ui.notify(`Aborting: Current directory (${cwd}) not in allowed paths`, "error");
         ctx.abort();
         return;
@@ -56,7 +55,7 @@ export class Config {
     }
   }
 
-  isPathAllowed(path: string, allowed: string[] | undefined): boolean {
+  pathAllowed(path: string, allowed: string[] | undefined): boolean {
     const normalized = path.replace(/\\/g, "/");
     const home = homedir();
     return (allowed ?? []).some((allowedPath) => {

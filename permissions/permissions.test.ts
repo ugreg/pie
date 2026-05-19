@@ -56,17 +56,17 @@ describe("Los lees de archivos", () => {
 
   describe("Path Allowed Checking", () => {
     test("should detect allowed path", () => {
-      const isAllowed = config.isPathAllowed("/Users/me/.pi/agent/extensions", TEST_CONFIG.paths);
+      const isAllowed = config.pathAllowed("/Users/me/.pi/agent/extensions", TEST_CONFIG.paths);
       expect(isAllowed).toBe(true);
     });
 
     test("should detect allowed child path", () => {
-      const isAllowed = config.isPathAllowed("/Users/me/.pi/agent/extensions/permissions", TEST_CONFIG.paths);
+      const isAllowed = config.pathAllowed("/Users/me/.pi/agent/extensions/permissions", TEST_CONFIG.paths);
       expect(isAllowed).toBe(true);
     });
 
     test("should detect non-allowed path", () => {
-      const isAllowed = config.isPathAllowed("/Users/sensative/path", TEST_CONFIG.paths);
+      const isAllowed = config.pathAllowed("/Users/sensative/path", TEST_CONFIG.paths);
       expect(isAllowed).toBe(false);
     });
   });
