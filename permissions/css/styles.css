@@ -1,0 +1,16 @@
+@font-face {
+  font-family: 'CaskaydiaMonoNerdFont';
+  src: url('./CaskaydiaMonoNerdFontMono-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.nerd-diagram {
+  font-family: 'CaskaydiaMonoNerdFont', monospace;
+  font-size: 14px;
+  line-height: 1.2;
+  white-space: pre;
+  display: block;
+  margin: 20px 0;
+  text-align: center;
+}
