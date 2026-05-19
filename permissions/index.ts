@@ -13,9 +13,9 @@ export default function (pi: ExtensionAPI) {
   const config = new Config();
   pi.on("session_start", async (_event, ctx) => {
     if (!existsSync(Config.FILE_PATH)) {
-      ctx.ui.notify(`Unable to find ${Config.FILE_PATH}. Please create ${Config.FILE_PATH}`, "warning");
+      ctx.ui.notify(`\nPi Permissions lite - required file ${Config.FILE_PATH} not found. Please create it.`, "error");
     } else {
-      ctx.ui.notify("Permissions extension loaded!\n", "info");
+      ctx.ui.notify("Pi Permissions lite extension loaded!\n", "info");
     }
   });
 
