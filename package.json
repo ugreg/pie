@@ -1,5 +1,5 @@
 {
-  "name": "pi-mono",
+  "name": "@ugreg/pi-agent-mon-repo",
   "version": "1.0.0",
   "private": true,
   "workspaces": [
