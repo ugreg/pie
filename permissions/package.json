@@ -44,8 +44,8 @@
   ],
   "scripts": {
     "build": "tsc",
-    "test": "bun test",
-    "test:watch": "bun test --watch",
-    "test:coverage": "bun test --coverage"
+    "test": "bun test test/",
+    "test:watch": "bun test --watch test/",
+    "test:coverage": "bun test --coverage test/"
   }
 }
