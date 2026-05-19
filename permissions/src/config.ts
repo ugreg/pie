@@ -56,33 +56,6 @@ export class Config {
     }
   }
 
-  async addPath(
-    ctx: ExtensionContext,
-    pi: ExtensionAPI,
-    toolName: string
-  ): Promise<void> {
-    let config: PermissionConfig;
-    try {
-      const raw = readFileSync(Config.FILE_PATH, "utf-8");
-      config = JSON.parse(raw);
-    } catch (e: unknown) {
-      config = { paths: [] };
-    }
-    
-    if (!config.paths) {
-      config.paths = [];
-    }
-    
-    const cwd = process.cwd();
-    if (!config.paths.includes(cwd)) {
-      config.paths.push(cwd);
-    }
-    
-    writeFileSync(Config.FILE_PATH, JSON.stringify(config, null, 2));
-    
-    ctx.ui.notify(`Added ${cwd} to allowed paths for ${toolName}`, "info");
-  }
-
   isPathAllowed(path: string, allowed: string[] | undefined): boolean {
     const normalized = path.replace(/\\/g, "/");
     const home = homedir();

@@ -3,7 +3,7 @@ import { readFileSync } from "fs";
 import { join } from "path";
 import { homedir } from "os";
 
-import { PermissionConfig, PermissionChoice } from "./types";
+import { PermissionConfig, PermissionChoice, Policy } from "./types";
 import { Config, Manager } from "./src";
 
 const config = new Config();

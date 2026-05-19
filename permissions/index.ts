@@ -6,9 +6,9 @@ import { Config, Manager } from "./src";
 
 import {
   PermissionConfig,
-  ToolCallEvent,
   SendOptions,
-  PermissionChoice } from "./src/types";
+  PermissionChoice,
+  Policy } from "./src/types";
 
 export default function (pi: ExtensionAPI) {
   const config = new Config();
@@ -28,7 +28,7 @@ export default function (pi: ExtensionAPI) {
     config.verify(ctx, policies, cwd);
     let toolName: string;
     let fullCommand: string;
-    let policy: "allow" | "deny" | "ask" | string;
+    let policy: Policy;
     let choice: PermissionChoice;
     ctx.ui.notify(`Tool: ${event.toolName}`, "info");
     // await manager.debug("before check bash", ctx, policies);
@@ -49,20 +49,18 @@ export default function (pi: ExtensionAPI) {
           `Permission request (${toolName})`,
           fullCommand
         );
-        if (choice === "allow_once") {
+        if (choice === "allow") {
           manager.sendPermissionNotification(ctx, toolName, fullCommand, choice);
-          return;
-        } else if (choice === "allow_always") {
-          manager.sendPermissionNotification(ctx, toolName, fullCommand, choice);
-          await config.addPath(ctx, pi, toolName);
           return;
         } else {
           ctx.abort();
+          return;
         }
       }
       case "deny":
         manager.sendPermissionNotification(ctx, toolName, fullCommand, "reject");
         ctx.abort();
+        return;
     }
   });
 }

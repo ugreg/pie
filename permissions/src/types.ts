@@ -6,10 +6,9 @@ export interface PermissionConfig {
   error?: {};
 }
 
-export interface ToolCallEvent {
-  toolName: string;
-  input: { command: string };
-}
+export type PermissionChoice = "allow" | "reject";
+
+export type Policy = "allow" | "deny" | "ask" | string;
 
 export interface SendOptions {
   triggerTurn: boolean;

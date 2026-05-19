@@ -1,10 +1,10 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 
-import { PermissionConfig, PermissionChoice } from "./types";
+import { PermissionConfig, PermissionChoice, Policy } from "./types";
 
 export class Manager {
 
-  getPolicy(config: PermissionConfig, toolName: string): "allow" | "deny" | "ask" {
+  getPolicy(config: PermissionConfig, toolName: string): Policy {
     if (config.allow?.includes(toolName)) {
       return "allow";
     }
@@ -26,13 +26,12 @@ export class Manager {
     resource: string
   ): Promise<PermissionChoice> {
     if (ctx.hasUI) {
-      const options = ["Allow once", "Allow always", "Reject"];
+      const options = ["Allow", "Reject"];
       const choice = await ctx.ui.select(`! ${action}: ${resource}`, options);
-      if (choice === options[0]) return "allow_once";
-      if (choice === options[1]) return "allow_always";
+      if (choice === options[0]) return "allow";
       return "reject";
     }
-    return "allow_once";
+    return "reject";
   }
 
   sendPermissionNotification(
@@ -42,11 +41,7 @@ export class Manager {
     decision: PermissionChoice
   ): void {
   
-    const statusMessage = decision === "reject"
-      ? "Rejected"
-      : decision === "allow_once"
-        ? "Approved (once)"
-        : "Approved (always)";
+    const statusMessage = decision === "reject" ? "Rejected" : "Allow";
   
     let toolNotice = "";
     
@@ -66,7 +61,7 @@ export class Manager {
   ): Promise<void> {
     const msg: string = `LOG step: ${step}\nLOG ask: ${policies.ask}\nLOG allow: ${policies.allow}\nLOG deny: ${policies.deny}\nLOG path: ${policies.paths}`
     ctx.ui.notify(msg, "info");
-    const options = ["Allow once", "Allow always", "Reject"];
+    const options = ["Allow", "Reject"];
     const choice = await ctx.ui.select(`! esc to continue`, []);
   }
 }
