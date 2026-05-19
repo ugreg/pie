@@ -1,17 +1,6 @@
 {
-  "ask": [
-    "edit",
-    "write"
-  ],
-  "allow": [
-    "code_search",
-    "fetch_content",
-    "find",
-    "get_search_content",
-    "grep",
-    "ls",
-    "read",
-    "web_search"
+  "paths": [
+    "/Users/me/.pi"
   ],
   "deny": [
     ":(){ :|:& };:",
@@ -31,7 +20,18 @@
     "shred",
     "wget"
   ],
-  "paths": [
-    "/Users/me/.pi"
+  "ask": [
+    "edit",
+    "write"
+  ],
+  "allow": [
+    "code_search",
+    "fetch_content",
+    "find",
+    "get_search_content",
+    "grep",
+    "ls",
+    "read",
+    "web_search"
   ]
 }
