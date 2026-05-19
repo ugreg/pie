@@ -23,31 +23,8 @@ export default function (pi: ExtensionAPI) {
   pi.on("tool_call" as any, async (event: any, ctx: ExtensionContext) => {
     const cwd = process.cwd();
     ctx.ui.notify(`Current path: (${cwd})`, "info");
-
     const policies = config.load();
-
-    if (!policies) {
-      ctx.ui.notify(`Config not loaded`, "error");
-      ctx.abort();
-      return;
-    }
-
-    if (policies.error) {
-      ctx.ui.notify(`Aborting: (${policies.error})`, "error");
-      ctx.abort();
-      return;
-    } else if (policies.paths && policies.paths.length > 0) {
-      if (!manager.isPathAllowed(cwd, policies.paths)) {
-        ctx.ui.notify(`Aborting: Current directory (${cwd}) not in allowed paths`, "error");
-        ctx.abort();
-        return;
-      }
-    } else {
-      ctx.ui.notify(`Aborting: allowed paths empty or not proper format`, "error");
-      ctx.abort();
-      return;
-    }
-
+    config.verify(ctx, policies);
     if (policies.paths && policies.paths.length > 0) {
       if (!manager.isPathAllowed(cwd, policies.paths)) {
         ctx.ui.notify(`Aborting: Current directory (${cwd}) not in allowed paths`, "error");
@@ -59,25 +36,18 @@ export default function (pi: ExtensionAPI) {
     let toolName: string;
     let fullCommand: string;
     let policy: "allow" | "deny" | "ask" | string;
-
     ctx.ui.notify(`Tool: ${event.toolName}`, "info");
-
     await manager.debug("before check bash", ctx, policies);
-
     toolName = event.toolName;
     fullCommand = "undefined";
-
     if (event.toolName === "bash" && event.input.command) {
       fullCommand = event.input.command;
       toolName = event.input.command.split(" ")[0];;
     }
-
     await manager.debug(`tool '${toolName}'`, ctx, policies);
-    
     policy = manager.getPolicy(policies, toolName);
 
     if (policy === "allow") return;
-
     if (policy === "ask") {
       const choice = await manager.showPermissionDialog(ctx, `Permission request (${toolName})`, fullCommand);
       if (choice === "allow_once") {
@@ -91,7 +61,6 @@ export default function (pi: ExtensionAPI) {
         ctx.abort();
       }
     }
-
     if (policy === "deny") {
       manager.sendPermissionNotification(ctx, toolName, fullCommand, "reject");
       ctx.abort();

@@ -9,6 +9,12 @@ export class Config {
 
   static readonly FILE_PATH = join(homedir(), ".pi", "permissions.json");
 
+  // dup async function addCwdToConfig(
+  save(config: PermissionConfig): void {
+    const numSpaces = 2;
+    writeFileSync(Config.FILE_PATH, JSON.stringify(config, null, numSpaces));
+  }
+
   load(): PermissionConfig {
      let raw = "";
      try {
@@ -27,10 +33,27 @@ export class Config {
      }
    }
 
-  // dup async function addCwdToConfig(
-  save(config: PermissionConfig): void {
-    const numSpaces = 2;
-    writeFileSync(Config.FILE_PATH, JSON.stringify(config, null, numSpaces));
+  async verify(ctx: ExtensionContext, policies: PermissionConfig): void {
+    if (!policies) {
+      ctx.ui.notify(`Config not loaded`, "error");
+      ctx.abort();
+      return;
+    }
+    if (policies.error) {
+      ctx.ui.notify(`Aborting: (${policies.error})`, "error");
+      ctx.abort();
+      return;
+    } else if (policies.paths && policies.paths.length > 0) {
+      if (!manager.isPathAllowed(cwd, policies.paths)) {
+        ctx.ui.notify(`Aborting: Current directory (${cwd}) not in allowed paths`, "error");
+        ctx.abort();
+        return;
+      }
+    } else {
+      ctx.ui.notify(`Aborting: allowed paths empty or not proper format`, "error");
+      ctx.abort();
+      return;
+    }
   }
 
   async addPath(
