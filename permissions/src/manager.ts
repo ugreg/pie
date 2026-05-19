@@ -1,6 +1,6 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 
-import { PermissionConfig } from "./types";
+import { PermissionConfig, PermissionChoice } from "./types";
 
 export class Manager {
 
@@ -24,7 +24,7 @@ export class Manager {
     ctx: ExtensionContext,
     action: string,
     resource: string
-  ): Promise<"allow_once" | "allow_always" | "reject"> {
+  ): Promise<PermissionChoice> {
     if (ctx.hasUI) {
       const options = ["Allow once", "Allow always", "Reject"];
       const choice = await ctx.ui.select(`! ${action}: ${resource}`, options);
@@ -39,7 +39,7 @@ export class Manager {
     ctx: ExtensionContext,
     toolName: string,
     cmd: string,
-    decision: "allow_once" | "allow_always" | "reject"
+    decision: PermissionChoice
   ): void {
   
     const statusMessage = decision === "reject"

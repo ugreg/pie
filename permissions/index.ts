@@ -7,7 +7,8 @@ import { Config, Manager } from "./src";
 import {
   PermissionConfig,
   ToolCallEvent,
-  SendOptions } from "./src/types";
+  SendOptions,
+  PermissionChoice } from "./src/types";
 
 export default function (pi: ExtensionAPI) {
   const config = new Config();
@@ -25,10 +26,10 @@ export default function (pi: ExtensionAPI) {
     ctx.ui.notify(`Current path: (${cwd})`, "info");
     const policies = config.load();
     config.verify(ctx, policies, cwd);
-
     let toolName: string;
     let fullCommand: string;
     let policy: "allow" | "deny" | "ask" | string;
+    let choice: PermissionChoice;
     ctx.ui.notify(`Tool: ${event.toolName}`, "info");
     // await manager.debug("before check bash", ctx, policies);
     toolName = event.toolName;
@@ -39,24 +40,29 @@ export default function (pi: ExtensionAPI) {
     }
     // await manager.debug(`tool '${toolName}'`, ctx, policies);
     policy = manager.getPolicy(policies, toolName);
-
-    if (policy === "allow") return;
-    if (policy === "ask") {
-      const choice = await manager.showPermissionDialog(ctx, `Permission request (${toolName})`, fullCommand);
-      if (choice === "allow_once") {
-        manager.sendPermissionNotification(ctx, toolName, fullCommand, choice);
+    switch (policy) {
+      case "allow":
         return;
-      } else if (choice === "allow_always") {
-        manager.sendPermissionNotification(ctx, toolName, fullCommand, choice);
-        await config.addPath(ctx, pi, toolName);
-        return;
-      } else {
-        ctx.abort();
+      case "ask": {
+        choice = await manager.showPermissionDialog(
+          ctx,
+          `Permission request (${toolName})`,
+          fullCommand
+        );
+        if (choice === "allow_once") {
+          manager.sendPermissionNotification(ctx, toolName, fullCommand, choice);
+          return;
+        } else if (choice === "allow_always") {
+          manager.sendPermissionNotification(ctx, toolName, fullCommand, choice);
+          await config.addPath(ctx, pi, toolName);
+          return;
+        } else {
+          ctx.abort();
+        }
       }
-    }
-    if (policy === "deny") {
-      manager.sendPermissionNotification(ctx, toolName, fullCommand, "reject");
-      ctx.abort();
+      case "deny":
+        manager.sendPermissionNotification(ctx, toolName, fullCommand, "reject");
+        ctx.abort();
     }
   });
 }
