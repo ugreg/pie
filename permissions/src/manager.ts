@@ -5,19 +5,18 @@ import { PermissionConfig, PermissionChoice, Policy } from "./types";
 export class Manager {
 
   getPolicy(config: PermissionConfig, toolName: string): Policy {
-    if (config.allow?.includes(toolName)) {
-      return "allow";
-    }
-    
     if (config.deny?.includes(toolName)) {
       return "deny";
     }
-    
-    if (config.ask?.includes(toolName)) {
+    else if (config.ask?.includes(toolName)) {
       return "ask";
     }
-    
-    return "deny";
+    else if (config.allow?.includes(toolName)) {
+      return "allow";
+    } 
+    else {
+      return "deny";
+    }
   }
   
   async showPermissionDialog(
