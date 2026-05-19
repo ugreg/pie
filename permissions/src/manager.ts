@@ -6,15 +6,6 @@ import { PermissionConfig, BashCommand } from "./types";
 
 export class Manager {
 
-  isBashCommand(cmd: string): boolean {
-    if (cmd.endsWith(" *")) {
-      const prefix = cmd.slice(0, -2);
-      return cmd.startsWith(prefix + " ");
-    }
-  
-    return false;
-  }
-  
   extractBashCommand(event: any): BashCommand {
     let bc: BashCommand = { command: "", args: "" };
     bc.command = event.input.command;

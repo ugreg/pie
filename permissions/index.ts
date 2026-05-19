@@ -72,12 +72,14 @@ export default function (pi: ExtensionAPI) {
 
     await manager.debug(`checked bash on command '${event.input.command}'`, ctx, policies);
 
-    if (event.toolName === "bash" && event.input.command && manager.isBashCommand(event.input.command)) {
+    if (event.toolName === "bash" && event.input.command) {
       bashCmd = manager.extractBashCommand(event);
       fullCommand = bashCmd.args;
       toolName = bashCmd.command;
     }
 
+    await manager.debug(`tool '${toolName}'`, ctx, policies);
+    
     policy = manager.getPolicy(policies, toolName);
 
     if (policy === "allow") return;
