@@ -2,15 +2,15 @@
 
 <link rel="stylesheet" href="css/styles.css">
 <pre class="nerd-diagram">
-π (pi tool) - ⌘ (This extension)
-                    :
-               ✔ Check policy
-            (deny > ask > allow)
-              :      :      :
-              x      ?      o
-                     :
-                  :     :
-                  x     o
+π (pi tool) - ⌘ (This extension) - ✔ Check policy
+                                        :
+                                  ✔ Check policy
+                                (deny > ask > allow)
+                                  :      :      :
+                                  x      ?      o
+                                        :
+                                      :     :
+                                      x     o
 </pre>
 
 Deterministic permission gates for [built-in tools](https://pi.dev/docs/latest/extensions#overriding-built-in-tools), bash commands, and other operations used in [pi coding agent](https://pi.dev/) by [Mario Zechner](https://mariozechner.at/).
