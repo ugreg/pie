@@ -9,7 +9,7 @@ on:
 
 jobs:
   unit-test:
-    runs-on: nixos
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -30,7 +30,7 @@ jobs:
         run: cd permissions && bun test test/
 
   integration-test:
-    runs-on: nixos
+    runs-on: ubuntu-latest
     needs: unit-test
     steps:
       - uses: actions/checkout@v4
