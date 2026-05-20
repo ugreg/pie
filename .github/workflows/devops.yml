@@ -21,7 +21,7 @@ jobs:
         run: bun install
       
       - name: Run tests
-        run: bun test
+        run: cd permissions && bun test test/
 
   sandbox-test:
     runs-on: ubuntu-latest
@@ -31,6 +31,7 @@ jobs:
       
       - name: Package extension
         run: |
+          cd permissions
           npm pack
           ls -la *.tgz
       
@@ -42,12 +43,13 @@ jobs:
         run: |
           mkdir -p ~/.pi/agent/extensions
           tar -xzf *.tgz -C ~/.pi/agent/extensions
-          cp permissions.example.json ~/.pi/permissions.json
+          cp permissions/permissions.example.json ~/.pi/permissions.json
       
       - name: Test allowed commands
         run: |
           # Test allowed commands
           echo "Testing allowed commands..."
+          cd permissions
           bun test test/
           
           # Verify extension is loaded
