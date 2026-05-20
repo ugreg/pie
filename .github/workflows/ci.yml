@@ -1,13 +1,14 @@
-name: Test
+name: DevOps
 
 on:
+  workflow_dispatch:
   push:
     branches: [d, m]
   pull_request:
     branches: [d, m]
 
 jobs:
-  test:
+  unit-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,7 +29,7 @@ jobs:
       - name: Run tests
         run: cd permissions && bun test test/
 
-  sandbox-test:
+  integration-test:
     runs-on: ubuntu-latest
     needs: test
     steps:
@@ -47,6 +48,7 @@ jobs:
       - name: Add extension to agent
         run: |
           mkdir -p ~/.pi/agent/extensions
+          cd permissions
           tar -xzf *.tgz -C ~/.pi/agent/extensions
 
       - name: Test allowed commands
