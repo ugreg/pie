@@ -1,3 +1,7 @@
+> [!CAUTION]
+> Pi packages can execute code and influence agent behavior.
+> Review the source before installing third-party packages.
+
 # pi extension monorepo
 
 ```
@@ -7,36 +11,19 @@
 ▓▓     ▓▓
 ```
 
-Monorepo with multiple packages and security checks.
-
-https://github.com/MasuRii/pi-permission-system
+Extensions for [pi coding agent](https://pi.dev/) by [Mario Zechner](https://mariozechner.at/).
 
 ## Setup
-
-### 1. Install Required Tools
 
 ```bash
 brew install trufflehog
 brew install semgrep
-```
-
-### 2. Install Dependencies
-
-```bash
 bun install
 ```
-
-This will automatically run `husky install` via the `prepare` script.
 
 ## Security Checks
 
 ### Run Manually
-
-```bash
-npm run security:check
-```
-
-### Test the Hook
 
 ```bash
 bash .husky/pre-commit
