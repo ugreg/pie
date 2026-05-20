@@ -1,13 +1,11 @@
 # pi extension monorepo
 
-<div style="display: flex; justify-content: center; align-items: center;">
 ```
 ▓▓▓▓▓▓▓
 ▓▓   ▓▓
 ▓▓▓▓▓  ▓▓
 ▓▓     ▓▓
 ```
-</div>
 
 Monorepo with multiple packages and security checks.
 
