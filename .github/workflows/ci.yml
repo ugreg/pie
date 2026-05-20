@@ -39,11 +39,15 @@ jobs:
         run: |
           npm install -g @earendil-works/pi-coding-agent
       
+      - name: Create pi config directory
+        run: |
+          mkdir -p ~/.pi
+          cp permissions/permissions.example.json ~/.pi/permissions.json
+      
       - name: Add extension to agent
         run: |
           mkdir -p ~/.pi/agent/extensions
           tar -xzf *.tgz -C ~/.pi/agent/extensions
-          cp permissions/permissions.example.json ~/.pi/permissions.json
       
       - name: Test allowed commands
         run: |
