@@ -10,6 +10,7 @@ on:
 jobs:
   unit-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
 
@@ -31,6 +32,7 @@ jobs:
 
   integration-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     needs: unit-test
     steps:
       - uses: actions/checkout@v4
@@ -55,7 +57,7 @@ jobs:
       
       - name: Install nix and llama-cpp
         run: |
-          curl -L https://nixos.org/nix/install | sh
+          sh <(curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install) --daemon
           nix profile install nixpkgs#llama-cpp
       
       - name: Run llama-server
