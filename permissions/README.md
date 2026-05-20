@@ -1,11 +1,11 @@
 # About
 
 ```
-π (pi tool) - ⌘ (This extension) - ✔ Check policy
-                                        :
-                                (deny > ask > allow)
-                                  :      :      :
-                                  x      ?      o
+π (tool) - ⌘ (extension) - ✔ Check policy
+                               :
+                      (deny > ask > allow)
+                        :      :      :
+                        x      ?      o
 ```
 
 Deterministic permission gates for pi [built-in tools](https://pi.dev/docs/latest/extensions#overriding-built-in-tools), bash commands, and other operations.
