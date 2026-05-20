@@ -16,10 +16,15 @@ jobs:
         uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
-      
+
       - name: Install dependencies
         run: bun install
-      
+
+      - name: Create pi config directory
+        run: |
+          mkdir -p ~/.pi
+          cp permissions/permissions.example.json ~/.pi/permissions.json
+
       - name: Run tests
         run: cd permissions && bun test test/
 
@@ -28,7 +33,7 @@ jobs:
     needs: test
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Package extension
         run: |
           cd permissions
@@ -38,17 +43,12 @@ jobs:
       - name: Install pi coding agent
         run: |
           npm install -g @earendil-works/pi-coding-agent
-      
-      - name: Create pi config directory
-        run: |
-          mkdir -p ~/.pi
-          cp permissions/permissions.example.json ~/.pi/permissions.json
-      
+
       - name: Add extension to agent
         run: |
           mkdir -p ~/.pi/agent/extensions
           tar -xzf *.tgz -C ~/.pi/agent/extensions
-      
+
       - name: Test allowed commands
         run: |
           # Test allowed commands
