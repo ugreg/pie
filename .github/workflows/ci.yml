@@ -59,7 +59,8 @@ jobs:
         run: |
           sh <(curl --proto '=https' --tlsv1.2 -L https://nixos.org/nix/install) --daemon
           export PATH=$PATH:/nix/var/nix/profiles/default/bin
-          nix profile install nixpkgs#llama-cpp
+          export NIX_ENABLE_EXPERIMENTAL=1
+          nix --extra-experimental-features nix-command profile install nixpkgs#llama-cpp
       
       - name: Run llama-server
         run: |
