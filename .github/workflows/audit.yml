@@ -1,0 +1,10 @@
+name: Weekly Dependency Audit
+on:
+  schedule:
+    - cron: '0 7 * * 1'  # every monday at 7am UTC
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm audit --audit-level=moderate
