@@ -9,10 +9,10 @@ on:
 
 jobs:
   unit-test:
-    runs-on: ubuntu-latest
+    runs-on: nixos
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup bun
         uses: oven-sh/setup-bun@v1
         with:
@@ -30,7 +30,7 @@ jobs:
         run: cd permissions && bun test test/
 
   integration-test:
-    runs-on: ubuntu-latest
+    runs-on: nixos
     needs: unit-test
     steps:
       - uses: actions/checkout@v4
@@ -40,24 +40,63 @@ jobs:
           cd permissions
           npm pack
           ls -la *.tgz
-      
+
       - name: Install pi coding agent
         run: |
           npm install -g @earendil-works/pi-coding-agent
-
+      
+      - name: Install hf cli
+        run: |
+          curl -LsSf https://hf.co/cli/install.sh | bash
+      
+      - name: Download model
+        run: |
+          hf download hugging-quants/Llama-3.2-1B-Instruct-Q8_0-GGUF --include "*"
+      
+      - name: Install nix and llama-cpp
+        run: |
+          curl -L https://nixos.org/nix/install | sh
+          nix profile install nixpkgs#llama-cpp
+      
+      - name: Run llama-server
+        run: |
+          llama-server -hf hugging-quants/Llama-3.2-1B-Instruct-Q8_0-GGUF -c 107872 -ctk q8_0 -ctv q8_0 -fa 1 -n 32768 --temp 0.6 --top-p 0.95 --top-k 20 --repeat-penalty 1.00 --chat-template-kwargs '{"preserve_thinking": true}' --batch-size 2048 --ubatch-size 2048 --prio 2 --no-mmap --threads 8 -ngl 99 --parallel 1 --port 8080 &
+          sleep 10
+      
+      - name: Configure model in models.json
+        run: |
+          mkdir -p ~/.pi/agent
+          cat > ~/.pi/agent/models.json << EOF
+          {
+            "providers": {
+              "llama-cpp": {
+                "baseUrl": "http://127.0.0.1:8080/v1",
+                "api": "openai-completions",
+                "apiKey": "none",
+                "models": [
+                  {
+                    "id": "hugging-quants/Llama-3.2-1B-Instruct-Q8_0-GGUF",
+                    "name": "Llama-3.2-1B-Instruct-Q8_0-GGUF",
+                    "contextWindow": 107872
+                  }
+                ]
+              }
+            }
+          }
+          EOF
+      
       - name: Add extension to agent
         run: |
           mkdir -p ~/.pi/agent/extensions
           cd permissions
           tar -xzf *.tgz -C ~/.pi/agent/extensions
 
+      - name: Verify pi can talk to me
+        run: |
+          pi -p "Summarize this codebase"
+          pi list
+
       - name: Test allowed commands
         run: |
-          # Test allowed commands
-          echo "Testing allowed commands..."
-          cd permissions
-          bun test test/
-          
-          # Verify extension is loaded
-          echo "Verifying extension..."
-          ls ~/.pi/agent/extensions/
+          pi -p "use ls to show me all files in this path"
+          pi -p "tell me what version of grep we have here"
