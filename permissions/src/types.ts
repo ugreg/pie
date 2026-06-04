@@ -12,4 +12,6 @@ export interface PermissionConfig {
 export interface ToolCall {
   name: string;
   command: string;
+  bashCommands?: string[];
+  bashPaths?: string[];
 }

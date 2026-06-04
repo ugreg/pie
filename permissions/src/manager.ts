@@ -9,28 +9,8 @@ import {
 
 export class Manager {
 
-  async process(ctx: ExtensionContext, permissions: PermissionConfig, event: any): Promise<void> {
-    let policy: Policy;
+  async checkPolicy(ctx: ExtensionContext, toolCall: ToolCall, policy: Policy): Promise<void> {
     let choice: PermissionChoice;
-    let toolCall: ToolCall = { name: "", command: "" };
-    let res: Map<string, string> = new Map();
-    
-    toolCall.name = event.toolName;
-    if (event.toolName === "bash" && event.input.command) {
-      toolCall.name = event.input.command.split(" ")[0];
-      toolCall.command = event.input.command;
-      res = await this.extractCommands(toolCall.command, permissions);
-      this.debug(`step on the result ${JSON.stringify(Object.fromEntries(res), null, 2)}`, ctx, permissions)
-    }
-    // also process paths used in larger run commands like $ cd /Users/yo/Downloads/rems && for f in *.gb; do
-    for (const [command, policy] of res) {
-      if (policy === "deny") {
-        this.sendPermissionNotification(ctx, "bash", command, "reject");
-        ctx.abort();
-        return;
-      }
-    }
-    policy = this.getPolicy(permissions, toolCall.name);
     switch (policy) {
       case "allow":
         return;
@@ -53,6 +33,37 @@ export class Manager {
         ctx.abort();
         return;
     }
+  }
+
+  async process(ctx: ExtensionContext, permissions: PermissionConfig, event: any): Promise<void> {
+    let policy: Policy;
+    let toolCall: ToolCall = { name: "", command: "" };
+    let res: Map<string, string> = new Map();
+    
+    toolCall.name = event.toolName;
+    if (event.toolName === "bash" && event.input.command) {
+      toolCall.name = event.input.command.split(" ")[0];
+      toolCall.command = event.input.command;
+      res = await this.extractCommands(toolCall.command, permissions);
+      this.debug(`initial map result ${JSON.stringify(Object.fromEntries(res), null, 2)}`, ctx, permissions);
+      // also process paths used in larger run commands like $ cd /Users/yo/Downloads/rems && for f in *.gb; do
+      for (const [command, policy] of res) {
+        toolCall.bashCommands?.push(command);
+        if (policy === "deny") {
+          this.sendPermissionNotification(ctx, "bash", command, "reject");
+          ctx.abort();
+          return;
+        }
+      }
+      this.debug(`checking bash arry ${toolCall.bashCommands?.join(", ")}`, ctx, permissions);
+      for (const item of toolCall.bashCommands ?? []) {
+        let subTool: ToolCall = { name: "bash", command: item };
+        policy = this.getPolicy(permissions, item);
+        this.checkPolicy(ctx, subTool, policy);
+      }
+    }
+    policy = this.getPolicy(permissions, toolCall.name);
+    this.checkPolicy(ctx, toolCall, policy)
   }
 
   async extractCommands(text: string, config: PermissionConfig): Promise<Map<string, string>> {
