@@ -3,10 +3,6 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 
 import { Config, Manager } from "./src";
 
-import {
-  ToolCall
-} from "./src/types";
-
 export default function (pi: ExtensionAPI) {
   const config = new Config();
   pi.on("session_start", async (_event, ctx) => {
@@ -23,13 +19,6 @@ export default function (pi: ExtensionAPI) {
     ctx.ui.notify(`Current path: (${cwd})`, "info");
     const permissions = config.load();
     config.verify(ctx, permissions, cwd);
-    let toolCall: ToolCall = { name: "", command: "" };
-    ctx.ui.notify(`Tool: ${event.toolName}`, "info");
-    toolCall.name = event.toolName;
-    if (event.toolName === "bash" && event.input.command) {
-      toolCall.name = event.input.command.split(" ")[0];
-      toolCall.command = event.input.command;
-    }
-    await manager.process(ctx, permissions, toolCall);
+    await manager.process(ctx, permissions, event);
   });
 }

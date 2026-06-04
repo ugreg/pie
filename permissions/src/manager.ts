@@ -9,9 +9,27 @@ import {
 
 export class Manager {
 
-  async process(ctx: ExtensionContext, permissions: PermissionConfig, toolCall: ToolCall): Promise<void> {
+  async process(ctx: ExtensionContext, permissions: PermissionConfig, event: any): Promise<void> {
     let policy: Policy;
     let choice: PermissionChoice;
+    let toolCall: ToolCall = { name: "", command: "" };
+    let res: Map<string, string> = new Map();
+    
+    toolCall.name = event.toolName;
+    if (event.toolName === "bash" && event.input.command) {
+      toolCall.name = event.input.command.split(" ")[0];
+      toolCall.command = event.input.command;
+      res = await this.extractCommands(toolCall.command, permissions);
+      this.debug(`step on the result ${JSON.stringify(Object.fromEntries(res), null, 2)}`, ctx, permissions)
+    }
+    // also process paths used in larger run commands like $ cd /Users/yo/Downloads/rems && for f in *.gb; do
+    for (const [command, policy] of res) {
+      if (policy === "deny") {
+        this.sendPermissionNotification(ctx, "bash", command, "reject");
+        ctx.abort();
+        return;
+      }
+    }
     policy = this.getPolicy(permissions, toolCall.name);
     switch (policy) {
       case "allow":
@@ -36,6 +54,27 @@ export class Manager {
         return;
     }
   }
+
+  async extractCommands(text: string, config: PermissionConfig): Promise<Map<string, string>> {
+    const results = new Map<string, string>();
+    let tool;
+    let policy: string = "none";
+    for (const match of text.matchAll(/(?:^|\s|&&|\|)\s*(\w+)/g)) {
+      for (const [cat, cmds] of Object.entries(config)) {
+        if (cmds?.includes(match[1])) {
+          tool = cat;
+        }
+      }
+      if (tool && !results.has(match[1])) {
+        tool = match[1];
+        policy = this.getPolicy(config, tool);
+        if (policy != "desconocido") {
+          results.set(match[1], policy);
+        }
+      }
+    }
+    return results;
+  }
   
   getPolicy(permissions: PermissionConfig, toolName: string): Policy {
     if (permissions.deny?.includes(toolName)) {
@@ -48,7 +87,7 @@ export class Manager {
       return "allow";
     } 
     else {
-      return "deny";
+      return "desconocido";
     }
   }
   
@@ -72,11 +111,8 @@ export class Manager {
     cmd: string,
     decision: PermissionChoice
   ): void {
-  
     const statusMessage = decision === "reject" ? "Rejected" : "Allow";
-  
     let toolNotice = "";
-    
     if (toolName === "bash") {
       toolNotice = `${statusMessage} Permission request (${toolName}) tool command: ${cmd}`;
     } else {
@@ -89,9 +125,15 @@ export class Manager {
   async debug(
     step: string,
     ctx: ExtensionContext,
-    policies: PermissionConfig
+    policies?: PermissionConfig,
+    toolCall?: ToolCall
   ): Promise<void> {
-    const msg: string = `LOG step: ${step}\nLOG ask: ${policies.ask}\nLOG allow: ${policies.allow}\nLOG deny: ${policies.deny}\nLOG path: ${policies.paths}`
+    const ask = policies?.ask?.join(', ') || 'ask none';
+    const allow = policies?.allow?.join(', ') || 'allow none';
+    const deny = policies?.deny?.join(', ') || 'deny none';
+    const paths = policies?.paths?.join(', ') || 'paths none';
+    let msg: string = `LOG step: ${step}\nLOG ask: ${ask}\nLOG allow: ${allow}\nLOG deny: ${deny}\nLOG path: ${paths}}`
     ctx.ui.notify(msg, "info");
+    ctx.ui.notify("----------------------------", "warning");
   }
 }
